@@ -39,6 +39,7 @@ along with this software (see the LICENSE.md file). If not, see
         <container id="content"><container style="inner"><container style="container-fluid">
             <section-include name="MessagesSection" location="component://webroot/screen/webroot/apps.xml"/>
 
+			<container style="fotomaxlogin"><image url-type="plain" url="/fmxstatic/logofotomax.png" alt="Fotomax" style="fotomaxloginlogo"/></container>
             <render-mode>
                 <text type="html" template="true" location="component://webroot/screen/webroot/Login.ftl"/>
             </render-mode>
