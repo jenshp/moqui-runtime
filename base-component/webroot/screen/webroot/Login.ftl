@@ -2,7 +2,7 @@
 <div class="tab-content">
     <div id="login" class="tab-pane active">
         <form method="post" action="${sri.makeUrlByType("login", "transition", null, "false").getUrl()}" class="form-signin">
-            <p class="text-muted text-center">Enter your username and password to sign in</p>
+            <p class="text-muted text-center">${ec.l10n.localize("Enter your username and password to sign in")}</p>
             <#-- not needed for this request: <input type="hidden" name="moquiSessionToken" value="${ec.web.sessionToken}"> -->
             <input type="text" name="username" value="${(ec.getWeb().getErrorParameters().get("username"))!""}" placeholder="Username" required="required" class="form-control top">
             <#if !ec.getWeb()?? || ec.getWeb().getSession().getAttribute("moqui.tenantAllowOverride")! != "N">
@@ -46,8 +46,8 @@
 </div>
 <div class="text-center">
     <ul class="list-inline">
-        <li><a class="text-muted" href="#login" data-toggle="tab">Login</a></li>
-        <li><a class="text-muted" href="#reset" data-toggle="tab">Reset Password</a></li>
-        <li><a class="text-muted" href="#change" data-toggle="tab">Change Password</a></li>
+        <li><a class="text-muted" href="#login" data-toggle="tab">${ec.l10n.localize("Login")}</a></li>
+        <li><a class="text-muted" href="#reset" data-toggle="tab">${ec.l10n.localize("Reset Password")}</a></li>
+        <li><a class="text-muted" href="#change" data-toggle="tab">${ec.l10n.localize("Change Password")}</a></li>
     </ul>
 </div>
