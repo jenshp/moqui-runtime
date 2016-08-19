@@ -13,7 +13,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.6.xsd">
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd">
 
     <transition name="visitDetail"><default-response url="../VisitDetail"/></transition>
     <transition name="userAccountDetail"><default-response url="//system/Security/UserAccountDetail"/></transition>
@@ -30,7 +30,7 @@ along with this software (see the LICENSE.md file). If not, see
                     <econdition field-name="visitId"/></entity-find-count>
             </row-actions>
             <field name="fromDate">
-                <header-field show-order-by="true"><text-find hide-options="true" size="16"/></header-field>
+                <header-field show-order-by="true"><date-period allow-empty="true"/></header-field>
                 <default-field><display/></default-field>
             </field>
             <field name="visitId">
@@ -64,15 +64,14 @@ along with this software (see the LICENSE.md file). If not, see
                 <header-field show-order-by="true"><text-find hide-options="true" size="20"/></header-field>
                 <default-field><display/></default-field>
             </field>
-            <field name="hitCount"><default-field><display/></default-field></field>
-            <field name="find"><header-field title="Find"><submit/></header-field></field>
-            
+            <field name="hitCount"><header-field><label text="Hit Count" type="p"/><submit text="Find"/></header-field>
+                <default-field><display/></default-field></field>
+
             <form-list-column><field-ref name="visitId"/><field-ref name="fromDate"/></form-list-column>
             <form-list-column><field-ref name="visitorId"/><field-ref name="userId"/></form-list-column>
             <form-list-column><field-ref name="clientIpAddress"/><field-ref name="clientIpCountryGeoId"/></form-list-column>
             <form-list-column><field-ref name="serverIpAddress"/><field-ref name="initialRequest"/></form-list-column>
             <form-list-column><field-ref name="hitCount"/></form-list-column>
-            <form-list-column><field-ref name="find"/></form-list-column>
         </form-list>
     </widgets>
 </screen>

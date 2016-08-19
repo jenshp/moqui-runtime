@@ -13,7 +13,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.6.xsd"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
         default-menu-include="false" require-authentication="false">
 
     <transition name="login" require-session-token="false"><actions><script>ec.user.loginUser(username, password, tenantId)</script></actions>
@@ -30,7 +30,6 @@ along with this software (see the LICENSE.md file). If not, see
         html_scripts.add('/lib/jquery/jquery.min.js')
         // Bootstrap
         html_scripts.add('/lib/bootstrap/bootstrap.min.js')
-        html_stylesheets.add('/lib/bootstrap/bootstrap.min.css')
         // Moqui webroot layout
         html_stylesheets.add('/css/webroot-layout.css')
     </script></pre-actions>

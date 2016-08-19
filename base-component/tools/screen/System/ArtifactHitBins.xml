@@ -12,7 +12,7 @@ You should have received a copy of the CC0 Public Domain Dedication
 along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
-<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.6.xsd"
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
         default-menu-title="Artifact Bins" default-menu-index="3">
 
     <transition name="ArtifactHitBinStats.csv">
@@ -49,8 +49,8 @@ along with this software (see the LICENSE.md file). If not, see
             <field name="artifactType">
                 <header-field show-order-by="true">
                     <drop-down allow-empty="true">
-                        <option key="screen"/><option key="screen-content"/><option key="transition"/>
-                        <option key="service"/><option key="entity"/>
+                        <option key="AT_XML_SCREEN"/><option key="AT_XML_SCREEN_CONTENT"/><option key="AT_XML_SCREEN_TRANS"/>
+                        <option key="AT_SERVICE"/><option key="AT_ENTITY"/>
                     </drop-down>
                 </header-field>
                 <default-field><display/></default-field>
@@ -98,7 +98,8 @@ along with this software (see the LICENSE.md file). If not, see
                 <header-field title="Slow Hits" show-order-by="true"/>
                 <default-field><display/></default-field>
             </field>
-            <field name="find"><header-field title="Find"><submit/></header-field></field>
+            <field name="find"><header-field title="Find"><submit/></header-field>
+                <default-field><display text=" "/></default-field></field>
 
             <form-list-column><field-ref name="artifactType"/><field-ref name="artifactSubType"/></form-list-column>
             <form-list-column><field-ref name="artifactName"/><field-ref name="binStartDateTime"/></form-list-column>

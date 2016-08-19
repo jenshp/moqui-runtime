@@ -13,11 +13,16 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.6.xsd"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
         default-menu-title="Index" default-menu-index="2">
 
     <transition name="indexFeedDocuments">
-        <service-call name="org.moqui.impl.EntityServices.index#DataFeedDocuments" in-map="context"/>
+        <!-- <service-call name="org.moqui.search.SearchServices.index#DataFeedDocuments" in-map="context"/> -->
+        <actions>
+            <script>jobRunId = ec.service.job("IndexDataFeedDocuments").parameter("dataFeedId", dataFeedId)
+                    .parameter("fromUpdateStamp", fromUpdateStamp).parameter("thruUpdateStamp", thruUpdateStamp).run()</script>
+            <message>Started Index DataFeed Documents Job (Job ID ${jobRunId})</message>
+        </actions>
         <default-response url="."/>
     </transition>
 
@@ -27,9 +32,7 @@ along with this software (see the LICENSE.md file). If not, see
                 <drop-down combo-box="true">
                     <entity-options key="${dataFeedId}" text="${feedName} [${dataFeedId}]">
                         <entity-find entity-name="moqui.entity.feed.DataFeed">
-                            <order-by field-name="feedName"/>
-                        </entity-find>
-                    </entity-options>
+                            <order-by field-name="feedName"/></entity-find></entity-options>
                 </drop-down>
             </default-field></field>
             <field name="fromUpdateStamp"><default-field><date-time type="timestamp"/></default-field></field>

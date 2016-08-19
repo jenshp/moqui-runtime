@@ -13,55 +13,53 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.6.xsd"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
         default-menu-title="Export" default-menu-index="3">
 
     <transition name="DocumentExport.json">
-        <actions>
-            <script><![CDATA[
-                import org.moqui.context.ExecutionContext
-                import org.moqui.impl.entity.EntityDataDocument
+        <actions><script><![CDATA[
+            import org.moqui.context.ExecutionContext
+            import org.moqui.impl.entity.EntityDataDocument
 
-                import java.sql.Timestamp
+            import java.sql.Timestamp
 
-                ExecutionContext ec = context.ec
-                EntityDataDocument edd = ec.entity.getEntityDataDocument()
+            ExecutionContext ec = context.ec
+            EntityDataDocument edd = ec.entity.getEntityDataDocument()
 
-                if (!context.dataDocumentIds) {
-                    ec.message.addError("No Data Documents specified, not exporting anything.")
-                    return
-                }
+            if (!context.dataDocumentIds) {
+                ec.message.addError(ec.l10n.localize("No Data Documents specified, not exporting anything."))
+                return
+            }
 
-                List<String> dataDocumentIdList
-                if (dataDocumentIds instanceof String) {
-                    dataDocumentIdList = [dataDocumentIds]
-                } else {
-                    dataDocumentIdList = dataDocumentIds
-                }
-                boolean prettyPrint = context.prettyPrint as Boolean
-                fromUpdateStamp = fromUpdateStamp ? fromUpdateStamp as Timestamp : null
-                thruUpdateStamp = thruUpdateStamp ? thruUpdateStamp as Timestamp : null
+            List<String> dataDocumentIdList
+            if (dataDocumentIds instanceof String) {
+                dataDocumentIdList = [dataDocumentIds]
+            } else {
+                dataDocumentIdList = dataDocumentIds
+            }
+            boolean prettyPrint = context.prettyPrint as Boolean
+            fromUpdateStamp = fromUpdateStamp ? fromUpdateStamp as Timestamp : null
+            thruUpdateStamp = thruUpdateStamp ? thruUpdateStamp as Timestamp : null
 
-                noResponse = false
-                if (context.output == "file") {
-                    edd.writeDocumentsToFile((String) path, dataDocumentIdList, null,
-                            fromUpdateStamp, thruUpdateStamp, prettyPrint)
-                } else if (context.output == "dir") {
-                    edd.writeDocumentsToDirectory((String) path, dataDocumentIdList, null,
-                            fromUpdateStamp, thruUpdateStamp, prettyPrint)
-                } else if (context.output == "browser") {
-                    def response = ec.web.response
-                    response.setContentType("application/json")
-                    response.setCharacterEncoding("UTF-8")
-                    response.addHeader("Cache-Control", "no-cache, must-revalidate, private")
-                    response.getWriter().write("[\n")
-                    edd.writeDocumentsToWriter(response.getWriter(), dataDocumentIdList, null,
-                            fromUpdateStamp, thruUpdateStamp, prettyPrint)
-                    response.getWriter().write("{}\n]\n")
-                    noResponse = true
-                }
-                ]]></script>
-        </actions>
+            noResponse = false
+            if (context.output == "file") {
+                edd.writeDocumentsToFile((String) path, dataDocumentIdList, null,
+                        fromUpdateStamp, thruUpdateStamp, prettyPrint)
+            } else if (context.output == "dir") {
+                edd.writeDocumentsToDirectory((String) path, dataDocumentIdList, null,
+                        fromUpdateStamp, thruUpdateStamp, prettyPrint)
+            } else if (context.output == "browser") {
+                def response = ec.web.response
+                response.setContentType("application/json")
+                response.setCharacterEncoding("UTF-8")
+                response.addHeader("Cache-Control", "no-cache, must-revalidate, private")
+                response.getWriter().write("[\n")
+                edd.writeDocumentsToWriter(response.getWriter(), dataDocumentIdList, null,
+                        fromUpdateStamp, thruUpdateStamp, prettyPrint)
+                response.getWriter().write("{}\n]\n")
+                noResponse = true
+            }
+        ]]></script></actions>
         <conditional-response type="none"><condition><expression>noResponse</expression></condition></conditional-response>
         <default-response url="."/>
     </transition>

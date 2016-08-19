@@ -11,10 +11,10 @@
     <title><#if html_title?has_content>${html_title}<#else><#-- ${ec.l10n.localize((ec.tenant.tenantName)!'Moqui')}--><#if parentMenuName?has_content>${ec.resource.expand(parentMenuName, "")} - </#if><#if defaultMenuName?has_content>${ec.resource.expand(defaultMenuName, "")}</#if></#if></title>
     <link rel="apple-touch-icon" href="/MoquiLogo100.png"/>
 <#-- Style Sheets -->
-<#list html_stylesheets?if_exists as styleSheetLocation>
+<#list sri.getThemeValues("STRT_STYLESHEET") as styleSheetLocation>
     <link rel="stylesheet" href="${sri.buildUrl(styleSheetLocation).url}" type="text/css">
 </#list>
-<#list sri.getThemeValues("STRT_STYLESHEET") as styleSheetLocation>
+<#list html_stylesheets?if_exists as styleSheetLocation>
     <link rel="stylesheet" href="${sri.buildUrl(styleSheetLocation).url}" type="text/css">
 </#list>
 <#-- JavaScript -->
@@ -28,6 +28,9 @@
 <#list sri.getThemeValues("STRT_SHORTCUT_ICON") as iconLocation>
     <link rel="shortcut icon" href="${sri.buildUrl(iconLocation).url}">
 </#list>
+
+    <#-- this is a fix for Select2 search input within Bootstrap Modal -->
+    <script>$.fn.modal.Constructor.prototype.enforceFocus = function() {};</script>
 </head>
 
 <#assign bodyClassList = sri.getThemeValues("STRT_BODY_CLASS")>

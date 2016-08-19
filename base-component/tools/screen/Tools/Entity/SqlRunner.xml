@@ -13,7 +13,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.6.xsd"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
         default-menu-title="SQL" begin-transaction="true">
 
     <pre-actions>
@@ -54,15 +54,15 @@ along with this software (see the LICENSE.md file). If not, see
                             rs.close()
 
                             if (limitReached) {
-                                ec.message.addMessage("Only showing first ${limit} rows.")
+                                ec.message.addMessage(ec.resource.expand('Only showing first ${limit} rows.',''))
                             } else {
-                                ec.message.addMessage("Showing all ${records.size()} results.")
+                                ec.message.addMessage(ec.resource.expand('Showing all ${records.size()} results.',''))
                             }
                         }
                     } else {
                         ps = con.prepareStatement(sql)
                         int rowsAffected = ps.executeUpdate()
-                        ec.message.addMessage("Query altered ${rowsAffected} rows.")
+                        ec.message.addMessage(ec.resource.expand('Query altered ${rowsAffected} rows.',''))
                     }
                 } catch (Exception e) {
                     ec.message.addError(e.toString())

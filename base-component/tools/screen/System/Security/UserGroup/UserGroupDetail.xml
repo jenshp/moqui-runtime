@@ -13,7 +13,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.6.xsd"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
         default-menu-index="1">
 
     <parameter name="userGroupId" required="true"/>
@@ -108,7 +108,7 @@ along with this software (see the LICENSE.md file). If not, see
                             <form-single name="CreateExistingUserGroupPermission" transition="createUserGroupPermission">
                                 <field name="userGroupId"><default-field><hidden/></default-field></field>
                                 <field name="userPermissionId"><default-field title="Permission">
-                                    <drop-down style="chosen-wider">
+                                    <drop-down>
                                         <entity-options key="${userPermissionId}" text="${userPermissionId} - ${description}">
                                             <entity-find entity-name="moqui.security.UserPermission">
                                                 <order-by field-name="userPermissionId"/></entity-find>
@@ -152,7 +152,7 @@ along with this software (see the LICENSE.md file). If not, see
                             extends="component://tools/screen/System/Security/ArtifactGroup/ArtifactGroupDetail.xml#CreateArtifactAuthz">
                         <field name="userGroupId"><default-field><hidden/></default-field></field>
                         <field name="artifactGroupId"><default-field title="Artifact Group">
-                            <drop-down style="chosen-wider">
+                            <drop-down>
                                 <entity-options key="${artifactGroupId}" text="${description} [${artifactGroupId}]">
                                     <entity-find entity-name="moqui.security.ArtifactGroup">
                                         <order-by field-name="description"/></entity-find>
@@ -182,7 +182,7 @@ along with this software (see the LICENSE.md file). If not, see
                             extends="component://tools/screen/System/Security/ArtifactGroup/ArtifactGroupDetail.xml#CreateArtifactTarpit">
                         <field name="userGroupId"><default-field><hidden/></default-field></field>
                         <field name="artifactGroupId"><default-field title="Artifact Group">
-                            <drop-down style="chosen-wider">
+                            <drop-down>
                                 <entity-options key="${artifactGroupId}" text="${description} [${artifactGroupId}]">
                                     <entity-find entity-name="moqui.security.ArtifactGroup">
                                         <order-by field-name="description"/></entity-find>
