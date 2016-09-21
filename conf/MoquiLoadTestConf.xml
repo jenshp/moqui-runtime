@@ -5,20 +5,18 @@
     https://github.com/moqui/moqui-framework/blob/master/framework/src/main/resources/MoquiDefaultConf.xml -->
 <moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-2.0.xsd">
 
-    <tools empty-db-load="seed,seed-initial,install"/>
-
     <server-stats stats-skip-condition="pathInfo?.startsWith('/rpc') || pathInfo?.startsWith('/rest') || pathInfo?.startsWith('/status')"/>
 
-    <webapp-list><webapp name="webroot" https-enabled="false"/></webapp-list>
+    <!-- for load test turn off tarpit -->
+    <artifact-execution-facade>
+        <artifact-execution type="AT_XML_SCREEN" tarpit-enabled="false"/>
+        <artifact-execution type="AT_XML_SCREEN_TRANS" tarpit-enabled="false"/>
+        <artifact-execution type="AT_SERVICE" tarpit-enabled="false"/>
+    </artifact-execution-facade>
+    <!-- for load test don't store login history -->
+    <user-facade><login history-store="false"/></user-facade>
 
-    <screen-facade boundary-comments="true"/>
-
-    <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME">
+    <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME" query-stats="true">
         <!-- add datasource elements here to configure databases -->
     </entity-facade>
-
-    <repository-list>
-        <!-- <repository name="main" workspace="staging" username="admin" password="admin">
-            <parameter name="org.apache.jackrabbit.repository.uri" value="http://localhost:8081/rmi"/></repository> -->
-    </repository-list>
 </moqui-conf>

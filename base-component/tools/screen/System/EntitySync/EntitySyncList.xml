@@ -67,18 +67,13 @@ along with this software (see the LICENSE.md file). If not, see
                 <header-field show-order-by="true"><text-find size="20" hide-options="true"/></header-field>
                 <default-field><display/></default-field>
             </field>
-            <field name="targetTenantId">
-                <header-field show-order-by="true"><text-find size="20" hide-options="true"/></header-field>
-                <default-field><display/></default-field>
-            </field>
             <field name="forPull">
                 <header-field><drop-down allow-empty="true"><option key="N"/><option key="Y"/></drop-down></header-field>
                 <default-field><display/></default-field>
             </field>
 
-            <field name="find">
-                <header-field title="Find"><submit/></header-field>
-            </field>
+            <field name="find"><header-field title="Find"><submit/></header-field>
+                <default-field><display text=" "/></default-field></field>
         </form-list>
     </widgets>
 </screen>

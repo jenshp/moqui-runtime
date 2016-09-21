@@ -118,10 +118,13 @@ input[type="text"].ui-autocomplete-input { width: auto; }
 .input-group .input-group-addon, .input-group .input-group-btn { display: inline; line-height: 34px; padding: 8px 12px; }
 
 /* Similar styles to Bootstrap .form-control-static, applied more specifically and without explicit class */
-.form-group>div>p, .form-group>div>span:not(.select2-container,.form-text-find), .form-group>div>a:not(.btn) { display:inline-block;
-    min-height: 34px; padding-top: 7px; padding-bottom: 7px; margin-bottom: 0; }
+.form-group > div > p, .form-group > div > span:not(.select2-container):not(.form-text-find):not(.input-group-addon), .form-group > div > a:not(.btn) {
+    display: inline-block; min-height: 34px; padding-top: 7px; padding-bottom: 7px; margin-bottom: 0; }
+.form-header-field > button.btn, .form-group > div > a.btn { margin-top: 2px !important; }
 
 .nav.nav-tabs { margin-bottom: 8px; }
+/* Make it apparent that you can click the current or current parent tab */
+.nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus { cursor: pointer; }
 
 /* Bootstrap by default has a 20px height for this, for 30px height shift up 5px */
 .navbar-brand>img { height: 30px; margin-top: -5px; }
@@ -129,9 +132,10 @@ input[type="text"].ui-autocomplete-input { width: auto; }
 .navbar-right.btn { margin-right: -6px; margin-left: 10px; }
 .navbar-right.btn-group { margin-right: -6px; margin-left: 0px; }
 
-nav.form-list-nav .pagination { margin: 6px 0 0 6px; }
-nav.form-list-nav form.form-inline { display: inline-block; margin: 6px 6px 0 0; float: left; }
-nav.form-list-nav>button { display: inline-block; margin: 8px 6px 0 6px; float: left; }
+nav.form-list-nav .pagination { margin: 6px 6px 0 6px; }
+nav.form-list-nav>form.form-inline { display: inline-block; margin: 2px 6px 0 0; float: left; }
+nav.form-list-nav>.btn { display: inline-block; margin: 6px 6px 0 6px; float: left; }
+nav.form-list-nav>span.select2-container { float: left; margin: 6px 0 6px 0; min-width: 100px; max-width: 160px; }
 
 /* Extend the Bootstrap panel, add support for a panel-toolbar, treat h5 and span just like bootstrap panel-title */
 .panel .panel-heading { position: relative; }
@@ -154,7 +158,7 @@ nav.form-list-nav>button { display: inline-block; margin: 8px 6px 0 6px; float: 
 
 input[type=radio], input[type=checkbox] { height: auto; }
 
-.select2-container { display: inline-block; min-width: 60px; }
+.select2-container { display: inline-block; min-width: 60px; margin-top: -2px; }
 .date-period .select2-container--bootstrap { display: inline-block; }
 
 a.jstree-anchor { white-space: normal; }
@@ -162,7 +166,11 @@ a.jstree-anchor { white-space: normal; }
 
 .modal-dialog { text-align: left; } /* needed when right aligning the dialog button */
 
-.datepicker {white-space: initial; } /* needed to wrap the months in select month panel */
+.datepicker { white-space: initial; } /* needed to wrap the months in select month panel */
+
+/* style for bootstrap-notify (growl alerts) */
+.notify-container { padding-right: 30px; }
+
 /* ======================= Screen-specific ======================= */
 
 .app-list-link { font-size: 1.5em; display: block; width: 320px; margin: 8px auto 8px auto; }
@@ -188,3 +196,26 @@ span.hover-image-container img.hover-image { background-color: #FFF6E8; padding:
     -webkit-border-radius: 4px; -moz-border-radius: 4px;border-radius: 4px; }
 
 span.hover-image-container:hover img.hover-image { display: initial; margin : 10px 0 0 5px; }
+
+/* ======================= hide-nav (mainly for printing) ======================= */
+
+.hide-nav button, .hide-nav a.btn { display: none; }
+.hide-nav .form-list-nav { display: none; }
+.hide-nav .nav { display: none; }
+body.hide-nav { padding-top: 0; } /* don't do body padding-top for nav bar */
+
+@media print {
+    /* use white background for all, bootstrap uses white background for tables but leaves all else transparent */
+    *, *:before, *:after { background: transparent none !important; }
+    body, .inner, .container-fluid { background: white none !important; }
+    /* don't show URL for links as bootstrap does by default, makes a mess */
+    a[href]:after { content: ""; }
+
+    button, a.btn { display: none !important; }
+    .form-order-by, .form-list-nav-row { display: none; }
+    .nav { display: none; }
+    #footer { display: none; }
+    body { padding-top: 0; } /* don't do body padding-top for nav bar */
+
+    .table-striped>tbody>tr:nth-child(even)>td { background-color: #EEEEEE !important; }
+}

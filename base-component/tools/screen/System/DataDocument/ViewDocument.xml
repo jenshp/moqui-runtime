@@ -20,19 +20,17 @@ along with this software (see the LICENSE.md file). If not, see
     <parameter name="_type" required="true"/>
     <parameter name="_id" required="true"/>
     
-    <actions>
-        <script>
-            import groovy.json.JsonOutput
-            import org.elasticsearch.client.Client
-            import org.elasticsearch.action.get.GetResponse
+    <actions><script>
+        import groovy.json.JsonOutput
+        import org.elasticsearch.client.Client
+        import org.elasticsearch.action.get.GetResponse
 
-            org.moqui.context.ExecutionContext ec = context.ec
-            Client elasticSearchClient = ec.getTool("ElasticSearch", Client.class)
-            GetResponse docGr = elasticSearchClient.prepareGet(_index, _type, _id).execute().actionGet()
-            documentString = JsonOutput.prettyPrint(docGr.getSourceAsString())
-            flattenedDocumentMap = StupidUtilities.flattenNestedMap(docGr.getSourceAsMap())
-        </script>
-    </actions>
+        org.moqui.context.ExecutionContext ec = context.ec
+        Client elasticSearchClient = ec.getTool("ElasticSearch", Client.class)
+        GetResponse docGr = elasticSearchClient.prepareGet(_index, _type, _id).execute().actionGet()
+        documentString = JsonOutput.prettyPrint(docGr.getSourceAsString())
+        flattenedDocumentMap = StupidUtilities.flattenNestedMap(docGr.getSourceAsMap())
+    </script></actions>
     <widgets>
         <label text="Flattened Map" type="h4"/>
         <label text="${flattenedDocumentMap}" encode="true"/>

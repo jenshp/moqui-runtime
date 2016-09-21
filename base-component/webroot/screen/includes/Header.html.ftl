@@ -8,13 +8,13 @@
     <#if html_description?has_content><meta name="description" content="${html_description}"></#if>
     <#assign parentMenuName = (sri.screenUrlInfo.parentScreen.getDefaultMenuName())!"">
     <#assign defaultMenuName = sri.screenUrlInfo.targetScreen.getDefaultMenuName()>
-    <title><#if html_title?has_content>${html_title}<#else><#-- ${ec.l10n.localize((ec.tenant.tenantName)!'Moqui')}--><#if parentMenuName?has_content>${ec.resource.expand(parentMenuName, "")} - </#if><#if defaultMenuName?has_content>${ec.resource.expand(defaultMenuName, "")}</#if></#if></title>
+    <title><#if html_title?has_content>${html_title}<#else><#if parentMenuName?has_content>${ec.resource.expand(parentMenuName, "")} - </#if><#if defaultMenuName?has_content>${ec.resource.expand(defaultMenuName, "")}</#if></#if></title>
     <link rel="apple-touch-icon" href="/MoquiLogo100.png"/>
 <#-- Style Sheets -->
-<#list html_stylesheets?if_exists as styleSheetLocation>
+<#list sri.getThemeValues("STRT_STYLESHEET") as styleSheetLocation>
     <link rel="stylesheet" href="${sri.buildUrl(styleSheetLocation).url}" type="text/css">
 </#list>
-<#list sri.getThemeValues("STRT_STYLESHEET") as styleSheetLocation>
+<#list html_stylesheets?if_exists as styleSheetLocation>
     <link rel="stylesheet" href="${sri.buildUrl(styleSheetLocation).url}" type="text/css">
 </#list>
 <#-- JavaScript -->
@@ -28,7 +28,10 @@
 <#list sri.getThemeValues("STRT_SHORTCUT_ICON") as iconLocation>
     <link rel="shortcut icon" href="${sri.buildUrl(iconLocation).url}">
 </#list>
+
+    <#-- this is a fix for Select2 search input within Bootstrap Modal -->
+    <script>$.fn.modal.Constructor.prototype.enforceFocus = function() {};</script>
 </head>
 
 <#assign bodyClassList = sri.getThemeValues("STRT_BODY_CLASS")>
-<body class="${(ec.user.getPreference("OUTER_STYLE")!(bodyClassList?first))!"bg-light"} ${(sri.screenUrlInfo.targetScreen.screenName)!""}"><!-- try "bg-dark" or "bg-light" -->
+<body class="${(ec.user.getPreference("OUTER_STYLE")!(bodyClassList?first))!"bg-light"} ${(sri.screenUrlInfo.targetScreen.screenName)!""}<#if hideNav! == "true"> hide-nav</#if>"><!-- try "bg-dark" or "bg-light" -->

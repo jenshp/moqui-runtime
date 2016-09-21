@@ -15,7 +15,7 @@
         <cache name="entity.data.feed.info" expire-time-idle="30"/>
 
         <cache name="service.location" expire-time-idle="5"/>
-
+        <cache name="service.rest.api" expire-time-idle="10"/>
         <cache name="kie.component.releaseId" expire-time-idle="5"/>
 
         <cache name="screen.location" expire-time-idle="10"/>
@@ -47,29 +47,34 @@
         <artifact-stats type="AT_ENTITY" persist-bin="true"/>
     </server-stats>
 
-    <webapp-list><webapp name="webroot" https-enabled="false"/></webapp-list>
+    <webapp-list>
+        <webapp name="webroot">
+            <servlet name="H2Console" class="org.h2.server.web.WebServlet" load-on-startup="1">
+                <!-- <init-param name="webAllowOthers" value=""/><init-param name="trace" value=""/> -->
+                <url-pattern>/h2/*</url-pattern>
+            </servlet>
+        </webapp>
+    </webapp-list>
     <artifact-execution-facade>
         <!-- turn off tarpit in dev mode -->
         <artifact-execution type="AT_XML_SCREEN" tarpit-enabled="false"/>
         <artifact-execution type="AT_XML_SCREEN_TRANS" tarpit-enabled="false"/>
         <artifact-execution type="AT_SERVICE" tarpit-enabled="false"/>
-        <artifact-execution type="AT_ENTITY" tarpit-enabled="false"/>
     </artifact-execution-facade>
 
     <screen-facade boundary-comments="true">
         <!-- The default conf file has a macro location defined for html already, but this is an example of how to
             refer to a file to override the default macros. -->
-        <screen-text-output type="html" mime-type="text/html"
-                            macro-template-location="template/screen-macro/ScreenHtmlMacros.ftl"/>
+        <screen-text-output type="html" mime-type="text/html" macro-template-location="template/screen-macro/ScreenHtmlMacros.ftl"/>
     </screen-facade>
 
-    <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME">
+    <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME" query-stats="true">
         <!-- add datasource elements here to configure databases -->
     </entity-facade>
 
     <repository-list>
         <!-- requires 'org.apache.jackrabbit:jackrabbit-jcr-rmi' in the classpath:
         <repository name="main" workspace="default" username="admin" password="admin">
-            <parameter name="org.apache.jackrabbit.repository.uri" value="http://localhost:8081/rmi"/></repository> -->
+            <init-param name="org.apache.jackrabbit.repository.uri" value="http://localhost:8081/rmi"/></repository> -->
     </repository-list>
 </moqui-conf>
