@@ -202,7 +202,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]?if_exists)}
                       <#if collapsible && !collapsibleOpened><#assign collapsibleOpened = true>
                         <fo:block>
                       </#if>
-                        <fo:block>${layoutNode["@title"]?default("Section " + layoutNode_index)}</fo:block>
+                        <fo:block>${${ec.getResource().expand(ec.getL10n().localize(layoutNode["@title"]?default ("Section " + layoutNode_index)),'')}</fo:block>
                         <fo:block>
                             <#list layoutNode?children as groupNode>
                                 <#if groupNode?node_name == "field-ref">
