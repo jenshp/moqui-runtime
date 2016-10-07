@@ -251,7 +251,7 @@ along with this software (see the LICENSE.md file). If not, see
     <#assign inFieldRowBig = false>
 </#macro>
 <#macro "field-group">
-    <fo:block font-weight="bold">${ec.getL10n().localize(.node["@title"]!("Fields"))}</fo:block>
+    <fo:block font-weight="bold">${ec.getResource().expand(ec.getL10n().localize(.node["@title"]!("Fields")), "")}</fo:block>
     <#recurse .node/>
 </#macro>
 <#macro "field-accordion"><#recurse .node/></#macro>

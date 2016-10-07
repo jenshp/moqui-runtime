@@ -675,7 +675,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     </#if>
 </#macro>
 <#macro "field-group">
-    <h3><a href="#">${ec.getL10n().localize(.node["@title"]!("Fields"))}</a></h3>
+    <h3><a href="#">${ec.getResource().expand(ec.getL10n().localize(.node["@title"]!("Fields")), "")}</a></h3>
     <div<#if .node["@style"]?has_content> class="${.node["@style"]}"</#if>>
         <#recurse .node/>
     </div>
