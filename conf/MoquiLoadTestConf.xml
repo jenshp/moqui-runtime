@@ -7,21 +7,16 @@
 
     <server-stats stats-skip-condition="pathInfo?.startsWith('/rpc') || pathInfo?.startsWith('/rest') || pathInfo?.startsWith('/status')"/>
 
-    <webapp-list>
-        <!-- NOTE: when you set https-enabled="true" make sure to set the http-port and https-port attributes -->
-        <webapp name="webroot" http-port="" http-host=""
-                https-port="" https-host="" https-enabled="false"/>
-    </webapp-list>
-
-    <!-- turn off tarpit in dev mode -->
+    <!-- for load test turn off tarpit -->
     <artifact-execution-facade>
         <artifact-execution type="AT_XML_SCREEN" tarpit-enabled="false"/>
         <artifact-execution type="AT_XML_SCREEN_TRANS" tarpit-enabled="false"/>
         <artifact-execution type="AT_SERVICE" tarpit-enabled="false"/>
     </artifact-execution-facade>
+    <!-- for load test don't store login history -->
     <user-facade><login history-store="false"/></user-facade>
 
-    <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME">
+    <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME" query-stats="true">
         <!-- add datasource elements here to configure databases -->
     </entity-facade>
 </moqui-conf>

@@ -26,9 +26,7 @@ along with this software (see the LICENSE.md file). If not, see
 
         <set field="osMXBean" from="java.lang.management.ManagementFactory.getOperatingSystemMXBean()"/>
         <set field="runtimeMXBean" from="java.lang.management.ManagementFactory.getRuntimeMXBean()"/>
-        <set field="uptime" from="org.joda.time.Duration.millis(runtimeMXBean.getUptime()).toPeriod()"/>
-        <set field="uptimeFormatter" from="new org.joda.time.format.PeriodFormatterBuilder().appendDays().appendSuffix('d ')
-                .appendHours().appendSuffix('h ').appendMinutes().appendSuffix('m ').appendSeconds().appendSuffix('s').toFormatter()"/>
+        <set field="uptimeHours" from="runtimeMXBean.getUptime() / (1000*60*60)"/>
 
         <set field="gcMXBeans" from="java.lang.management.ManagementFactory.getGarbageCollectorMXBeans()"/>
         <set field="gcCount" from="0"/><set field="gcTime" from="0"/>
@@ -60,8 +58,6 @@ along with this software (see the LICENSE.md file). If not, see
                 <link url="../Cache" text="Cache Stats and Mgmt"/>
                 <link url="../ServiceJob" text="Service Jobs"/>
                 <link url="../Print" text="Print Servers and Jobs"/>
-                <!-- Tenant link is conditional, and Tenant screen locked to DEFAULT tenant -->
-                <link url="../Tenant" text="Tenant Admin" condition="ec.tenantId == 'DEFAULT'"/>
             </box-body></container-box>
             <container-box><box-header><label text="Data Admin" type="h5"/></box-header><box-body>
                 <link url="../Localization" text="Localization"/>
@@ -105,15 +101,19 @@ along with this software (see the LICENSE.md file). If not, see
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="OS" type="strong"/></row-col>
                     <row-col xs="7"><label text="${osMXBean.getName()} ${osMXBean.getVersion()}"/></row-col></container-row>
 
-                <label text="JVM" type="strong"/>
+                <label text="Java Runtime" type="strong"/>
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="Version" type="strong"/></row-col>
                     <row-col xs="7"><label text="${runtimeMXBean.getSpecVersion()} (${runtimeMXBean.getVmVendor()} ${runtimeMXBean.getVmVersion()})"/></row-col></container-row>
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="Start" type="strong"/></row-col>
                     <row-col xs="7"><label text="${new Timestamp(runtimeMXBean.getStartTime())}"/></row-col></container-row>
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="Uptime" type="strong"/></row-col>
-                    <row-col xs="7"><label text="${uptimeFormatter.print(uptime)}"/></row-col></container-row>
+                    <row-col xs="7"><label text="${ec.l10n.format(uptimeHours, '#,##0.00')} hours"/></row-col></container-row>
+
+                <label text="Moqui Framework" type="strong"/>
+                <container-row><row-col xs="1"/><row-col xs="4"><label text="Version" type="strong"/></row-col>
+                    <row-col xs="7"><label text="${ec.factory.moquiVersion}"/></row-col></container-row>
             </row-col><row-col md="4">
-                <label text="Server" type="strong"/>
+                <label text="Web Server" type="strong"/>
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="Local IP" type="strong"/></row-col>
                     <row-col xs="7"><label text="${ec.web.request.getLocalAddr()}:${ec.web.request.getLocalPort()}"/></row-col></container-row>
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="Local Name" type="strong"/></row-col>
@@ -121,7 +121,7 @@ along with this software (see the LICENSE.md file). If not, see
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="Requested" type="strong"/></row-col>
                     <row-col xs="7"><label text="${ec.web.request.getServerName()}:${ec.web.request.getServerPort()}"/></row-col></container-row>
 
-                <label text="Java" type="strong"/>
+                <label text="Java Statistics" type="strong"/>
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="GC" type="strong"/></row-col>
                     <row-col xs="7"><label text="${gcCount}, ${ec.l10n.format(gcTime/1000, '#,##0.00')}s total"/></row-col></container-row>
                 <container-row><row-col xs="1"/><row-col xs="4"><label text="JIT" type="strong"/></row-col>
