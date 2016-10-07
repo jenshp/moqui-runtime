@@ -2,7 +2,6 @@
 <div class="tab-content">
     <div id="login" class="tab-pane active">
         <form method="post" action="${sri.makeUrlByType("login", "transition", null, "false").getUrl()}" class="form-signin" id="login_form">
-            <p class="text-muted text-center">Enter your username and password to sign in</p>
             <p class="text-muted text-center">${ec.l10n.localize("Enter your username and password to sign in")}</p>
             <#-- not needed for this request: <input type="hidden" name="moquiSessionToken" value="${ec.web.sessionToken}"> -->
             <input type="text" name="username" value="${(ec.getWeb().getErrorParameters().get("username"))!""}" placeholder="Username" required="required" class="form-control top" id="login_form_username">
