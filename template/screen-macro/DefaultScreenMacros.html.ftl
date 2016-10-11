@@ -303,7 +303,7 @@ ${sri.renderSection(.node["@name"])}
     <button id="${cdDivId}-button" type="button" data-toggle="modal" data-target="#${cdDivId}" data-original-title="${buttonText}" data-placement="bottom" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-share"></i> ${buttonText}</button>
     <#if _openDialog! == cdDivId><#assign afterScreenScript>$('#${cdDivId}').modal('show'); </#assign><#t>${sri.appendToScriptWriter(afterScreenScript)}</#if>
     <div id="${cdDivId}" class="modal container-dialog" aria-hidden="true" style="display: none;" tabindex="-1">
-        <div class="modal-dialog" style="width: ${.node["@width"]!"600"}px;">
+        <div class="modal-dialog" style="width: ${.node["@width"]!"760"}px;">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -339,7 +339,7 @@ ${sri.renderSection(.node["@name"])}
 
     <button id="${ddDivId}-button" type="button" data-toggle="modal" data-target="#${ddDivId}" data-original-title="${buttonText}" data-placement="bottom" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-share"></i> ${buttonText}</button>
     <div id="${ddDivId}" class="modal dynamic-dialog" aria-hidden="true" style="display: none;" tabindex="-1">
-        <div class="modal-dialog" style="width: ${.node["@width"]!"600"}px;">
+        <div class="modal-dialog" style="width: ${.node["@width"]!"760"}px;">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -536,8 +536,8 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
             <#assign labelValue = ec.getResource().expand(.node["@text"], "")/>
         </#if>
         <#assign labelDivId><@nodeId .node/></#assign>
-        <#if labelValue?trim?has_content>
-        <${labelType}<#if labelDivId?has_content> id="${labelDivId}"</#if><#if .node["@style"]?has_content> class="${ec.getResource().expandNoL10n(.node["@style"], "")}"</#if>><#if !.node["@encode"]?has_content || .node["@encode"] == "true">${labelValue?html?replace("\n", "<br>")}<#else>${labelValue}</#if></${labelType}>
+        <#if labelValue?trim?has_content || .node["@condition"]?has_content>
+        <${labelType}<#if labelDivId?has_content> id="${labelDivId}"</#if><#if .node["@style"]?has_content> class="${ec.getResource().expandNoL10n(.node["@style"], "")}"</#if><#if .node["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node["@tooltip"], "")}"</#if>><#if !.node["@encode"]?has_content || .node["@encode"] == "true">${labelValue?html?replace("\n", "<br>")}<#else>${labelValue}</#if></${labelType}>
         </#if>
     </#if>
 </#macro>
@@ -551,7 +551,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     <#assign parameterName = .node["@parameter-name"]!"value">
     <#if labelValue?trim?has_content>
         <${labelType} id="${editableDivId}" class="editable-label"><#if .node["@encode"]! == "true">${labelValue?html?replace("\n", "<br>")}<#else>${labelValue}</#if></${labelType}>
-        <#assign afterScreenScript>
+        <script>
         $("#${editableDivId}").editable("${urlInstance.url}", { indicator:"${ec.getL10n().localize("Saving")}",
             tooltip:"${ec.getL10n().localize("Click to edit")}", cancel:"${ec.getL10n().localize("Cancel")}",
             submit:"${ec.getL10n().localize("Save")}", name:"${parameterName}",
@@ -563,8 +563,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                 <#assign loadUrlParms = loadUrlInfo.getParameterMap()>
             , loadurl:"${loadUrlInfo.url}", loadtype:"POST", loaddata:function(value, settings) { return {<#list loadUrlParms.keySet() as parameterKey>${parameterKey}:"${loadUrlParms[parameterKey]}", </#list>currentValue:value, moquiSessionToken:"${(ec.getWeb().sessionToken)!}"}; }
             </#if>});
-        </#assign>
-        <#t>${sri.appendToScriptWriter(afterScreenScript)}
+        </script>
     </#if>
 </#macro>
 <#macro parameter><#-- do nothing, used directly in other elements --></#macro>
@@ -1225,6 +1224,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     <#assign formListUrlInfo = sri.makeUrlByType(formNode["@transition"], "transition", null, "false")>
     <#assign listName = formNode["@list"]>
     <#assign listObject = ec.getResource().expression(listName, "")!>
+    <#assign listHasContent = listObject?has_content>
 
     <#if !skipStart>
         <#assign needHeaderForm = formInstance.isHeaderForm()>
@@ -1281,7 +1281,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
             <tbody>
         </#if>
     </#if>
-    <#list listObject! as listEntry>
+    <#if listHasContent><#list listObject as listEntry>
         <#assign listEntryIndex = listEntry_index>
         <#-- NOTE: the form-list.@list-entry attribute is handled in the ScreenForm class through this call: -->
         ${sri.startFormListRow(formInstance, listEntry, listEntry_index, listEntry_has_next)}
@@ -1306,22 +1306,21 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         <#if isMulti || skipForm>
             </tr>
         <#else>
-            <#assign afterFormScript>
+            </form>
+            <script>
                 $("#${formId}_${listEntryIndex}").validate({ errorClass: 'help-block', errorElement: 'span',
                     highlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-success').addClass('has-error'); },
                     unhighlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-error').addClass('has-success'); }
                 });
-            </#assign>
-            <#t>${sri.appendToScriptWriter(afterFormScript)}
-            </form>
+            </script>
             </tr>
         </#if>
         ${sri.endFormListRow()}
-    </#list>
+    </#list></#if>
     <#assign listEntryIndex = "">
     ${sri.safeCloseList(listObject)}<#-- if listObject is an EntityListIterator, close it -->
     <#if !skipEnd>
-        <#if isMulti && !skipForm>
+        <#if isMulti && !skipForm && listHasContent>
             <tr><td colspan="${formListColumnList?size}">
                 <#list formNode["field"] as fieldNode><@formListSubField fieldNode false false true true/></#list>
             </td></tr>
@@ -1333,14 +1332,13 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         </table>
     </#if>
     <#if isMulti && !skipStart && !skipForm>
-        <#assign afterFormScript>
+        <script>
             $("#${formId}").validate({ errorClass: 'help-block', errorElement: 'span',
                 highlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-success').addClass('has-error'); },
                 unhighlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-error').addClass('has-success'); }
             });
             $('#${formId} [data-toggle="tooltip"]').tooltip();
-        </#assign>
-        <#t>${sri.appendToScriptWriter(afterFormScript)}
+        </script>
     </#if>
     <#if sri.doBoundaryComments()><!-- END   form-list[@name=${.node["@name"]}] --></#if>
     <#assign skipForm = false>
@@ -1615,6 +1613,7 @@ a => A, d => D, y => Y
     <#assign dispFieldId><@fieldId .node/></#assign>
     <#assign dispFieldNode = .node?parent?parent>
     <#assign dispAlign = dispFieldNode["@align"]!"left">
+    <#assign dispHidden = (!.node["@also-hidden"]?has_content || .node["@also-hidden"] == "true") && !(skipForm!false)>
     <#assign fieldValue = "">
     <#if .node["@text"]?has_content>
         <#assign textMap = "">
@@ -1635,10 +1634,30 @@ a => A, d => D, y => Y
     <#t><span id="${dispFieldId}_display" class="${sri.getFieldValueClass(dispFieldNode)}<#if .node["@currency-unit-field"]?has_content> currency</#if><#if dispAlign == "center"> text-center<#elseif dispAlign == "right"> text-right</#if>">
     <#t><#if fieldValue?has_content><#if .node["@encode"]! == "false">${fieldValue}<#else>${fieldValue?html?replace("\n", "<br>")}</#if><#else>&nbsp;</#if>
     <#t></span>
-    <#t><#if (!.node["@also-hidden"]?has_content || .node["@also-hidden"] == "true") && !(skipForm!false)>
+    <#t><#if dispHidden>
         <#-- use getFieldValuePlainString() and not getFieldValueString() so we don't do timezone conversions, etc -->
         <#-- don't default to fieldValue for the hidden input value, will only be different from the entry value if @text is used, and we don't want that in the hidden value -->
         <input type="hidden" id="${dispFieldId}" name="<@fieldName .node/>" value="${sri.getFieldValuePlainString(dispFieldNode, "")?html}">
+    </#if>
+    <#if .node["@dynamic-transition"]?has_content>
+        <#assign defUrlInfo = sri.makeUrlByType(.node["@dynamic-transition"], "transition", .node, "false")>
+        <#assign defUrlParameterMap = defUrlInfo.getParameterMap()>
+        <#assign depNodeList = .node["depends-on"]>
+        <script>
+            function populate_${dispFieldId}() {
+                var hasAllParms = true;
+                <#list depNodeList as depNode>if (!$('#<@fieldIdByName depNode["@field"]/>').val()) { hasAllParms = false; } </#list>
+                if (!hasAllParms) { <#-- alert("not has all parms"); --> return; }
+                $.ajax({ type:"POST", url:"${defUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
+                    <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = defUrlParameterMap.remove(depNodeField)!>, "${depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
+                    <#t><#list defUrlParameterMap?keys as parameterKey><#if defUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${defUrlParameterMap.get(parameterKey)}"</#if></#list>
+                    <#t>}, dataType:"text" }).done( function(defaultText) { if (defaultText) { $('#${dispFieldId}_display').html(defaultText); <#if dispHidden>$('#${dispFieldId}').val(defaultText);</#if> } } );
+            }
+            <#list depNodeList as depNode>
+            $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${dispFieldId}(); });
+            </#list>
+            populate_${dispFieldId}();
+        </script>
     </#if>
 </#macro>
 <#macro "display-entity">
@@ -1658,7 +1677,7 @@ a => A, d => D, y => Y
     <#if !currentValue?has_content><#assign currentValue = ec.getResource().expand(.node["@no-current-selected-key"]!, "")></#if>
     <#if currentValue?starts_with("[")><#assign currentValue = currentValue?substring(1, currentValue?length - 1)?replace(" ", "")></#if>
     <#assign currentValueList = (currentValue?split(","))!>
-    <#if allowMultiple && currentValueList?has_content><#assign currentValue=""></#if>
+    <#if currentValueList?has_content><#if allowMultiple><#assign currentValue=""><#else><#assign currentValue = currentValueList[0]></#if></#if>
     <#assign currentDescription = (options.get(currentValue))!>
     <#assign validationClasses = formInstance.getFieldValidationClasses(.node?parent?parent["@name"])>
     <#assign optionsHasCurrent = currentDescription?has_content>
@@ -1823,9 +1842,8 @@ a => A, d => D, y => Y
     <#assign formInstance = sri.getFormInstance(tlFieldNode?parent["@name"])>
     <#assign validationClasses = formInstance.getFieldValidationClasses(tlFieldNode["@name"])>
     <#assign regexpInfo = formInstance.getFieldValidationRegexpInfo(tlFieldNode["@name"])!>
-    <#assign isAutoComplete = .node["@ac-transition"]?has_content>
     <#-- NOTE: removed number type (<#elseif validationClasses?contains("number")>number) because on Safari, maybe others, ignores size and behaves funny for decimal values -->
-    <#if isAutoComplete>
+    <#if .node["@ac-transition"]?has_content>
         <#assign acUrlInfo = sri.makeUrlByType(.node["@ac-transition"], "transition", .node, "false")>
         <#assign acUrlParameterMap = acUrlInfo.getParameterMap()>
         <#assign acShowValue = .node["@ac-show-value"]! == "true">
@@ -1870,6 +1888,27 @@ a => A, d => D, y => Y
         <#t> class="form-control<#if validationClasses?has_content> ${validationClasses}</#if><#if tlAlign == "center"> text-center<#elseif tlAlign == "right"> text-right</#if>"
         <#t><#if validationClasses?has_content> data-vv-validations="${validationClasses}"</#if><#if validationClasses?contains("required")> required</#if><#if regexpInfo?has_content> pattern="${regexpInfo.regexp}"</#if>
         <#t><#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if>>
+        <#if .node["@default-transition"]?has_content>
+            <#assign defUrlInfo = sri.makeUrlByType(.node["@default-transition"], "transition", .node, "false")>
+            <#assign defUrlParameterMap = defUrlInfo.getParameterMap()>
+            <#assign depNodeList = .node["depends-on"]>
+            <script>
+                function populate_${id}() {
+                    if ($('#${id}').val()) return;
+                    var hasAllParms = true;
+                    <#list depNodeList as depNode>if (!$('#<@fieldIdByName depNode["@field"]/>').val()) { hasAllParms = false; } </#list>
+                    if (!hasAllParms) { <#-- alert("not has all parms"); --> return; }
+                    $.ajax({ type:"POST", url:"${defUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
+                            <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = defUrlParameterMap.remove(depNodeField)!>, "${depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
+                            <#t><#list defUrlParameterMap?keys as parameterKey><#if defUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${defUrlParameterMap.get(parameterKey)}"</#if></#list>
+                            <#t>}, dataType:"text" }).done( function(defaultText) { if (defaultText) { $('#${id}').val(defaultText); } } );
+                }
+                <#list depNodeList as depNode>
+                $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${id}(); });
+                </#list>
+                populate_${id}();
+            </script>
+        </#if>
     </#if>
 </#macro>
 
