@@ -48,7 +48,7 @@
     </server-stats>
 
     <webapp-list>
-        <webapp name="webroot" https-enabled="false">
+        <webapp name="webroot">
             <servlet name="H2Console" class="org.h2.server.web.WebServlet" load-on-startup="1">
                 <!-- <init-param name="webAllowOthers" value=""/><init-param name="trace" value=""/> -->
                 <url-pattern>/h2/*</url-pattern>
@@ -65,11 +65,10 @@
     <screen-facade boundary-comments="true">
         <!-- The default conf file has a macro location defined for html already, but this is an example of how to
             refer to a file to override the default macros. -->
-        <screen-text-output type="html" mime-type="text/html"
-                            macro-template-location="template/screen-macro/ScreenHtmlMacros.ftl"/>
+        <screen-text-output type="html" mime-type="text/html" macro-template-location="template/screen-macro/ScreenHtmlMacros.ftl"/>
     </screen-facade>
 
-    <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME">
+    <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME" query-stats="true">
         <!-- add datasource elements here to configure databases -->
     </entity-facade>
 
