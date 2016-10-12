@@ -9,7 +9,8 @@
 
     <webapp-list>
         <!-- NOTE: when you set https-enabled="true" make sure to set the http-port and https-port attributes -->
-        <webapp name="webroot" http-port="80" http-host="" https-port="443" https-host="" https-enabled="true"/>
+        <webapp name="webroot" http-port="" http-host="" https-port="443" https-host="moonsite.fotomaxchile.com"
+                https-enabled="true"/>
     </webapp-list>
 
     <entity-facade crypt-pass="MoquiDefaultPassword:CHANGEME">
