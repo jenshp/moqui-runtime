@@ -11,7 +11,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 
-<#macro attributeValue textValue>${Static["org.moqui.impl.StupidUtilities"].encodeForXmlAttribute(textValue, true)}</#macro>
+<#macro attributeValue textValue>${Static["org.moqui.util.StringUtilities"].encodeForXmlAttribute(textValue, true)}</#macro>
 
 <#macro @element><fo:block>=== Doing nothing for element ${.node?node_name}, not yet implemented. ===</fo:block></#macro>
 
@@ -155,12 +155,10 @@ along with this software (see the LICENSE.md file). If not, see
         <#else>
             <#assign textMap = "">
             <#if linkNode["@text-map"]?has_content><#assign textMap = ec.getResource().expression(linkNode["@text-map"], "")!></#if>
-            <#if textMap?has_content>
-                <#assign linkText = ec.getResource().expand(linkNode["@text"], "", textMap)>
-            <#else>
-                <#assign linkText = ec.getResource().expand(linkNode["@text"]!"", "")>
-            </#if>
+            <#if textMap?has_content><#assign linkText = ec.getResource().expand(linkNode["@text"], "", textMap)>
+                <#else><#assign linkText = ec.getResource().expand(linkNode["@text"]!"", "")></#if>
         </#if>
+        <#if linkText == "null"><#assign linkText = ""></#if>
         <#assign urlInstance = sri.makeUrlByType(linkNode["@url"], linkNode["@url-type"]!"transition", linkNode, linkNode["@expand-transition-url"]!"true")>
         <#if linkNode["@url-noparam"]! == "true"><#assign urlText = urlInstance.url/><#else><#assign urlText = urlInstance.urlWithParams/></#if>
         <fo:basic-link external-destination="${urlText?xml}" color="blue"><@attributeValue linkText/></fo:basic-link>
