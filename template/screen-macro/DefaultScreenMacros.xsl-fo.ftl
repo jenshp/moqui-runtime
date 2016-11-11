@@ -11,7 +11,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 
-<#macro attributeValue textValue>${Static["org.moqui.impl.StupidUtilities"].encodeForXmlAttribute(textValue, true)}</#macro>
+<#macro attributeValue textValue>${Static["org.moqui.util.StringUtilities"].encodeForXmlAttribute(textValue, true)}</#macro>
 
 <#macro @element><fo:block>=== Doing nothing for element ${.node?node_name}, not yet implemented. ===</fo:block></#macro>
 
@@ -155,12 +155,10 @@ along with this software (see the LICENSE.md file). If not, see
         <#else>
             <#assign textMap = "">
             <#if linkNode["@text-map"]?has_content><#assign textMap = ec.getResource().expression(linkNode["@text-map"], "")!></#if>
-            <#if textMap?has_content>
-                <#assign linkText = ec.getResource().expand(linkNode["@text"], "", textMap)>
-            <#else>
-                <#assign linkText = ec.getResource().expand(linkNode["@text"]!"", "")>
-            </#if>
+            <#if textMap?has_content><#assign linkText = ec.getResource().expand(linkNode["@text"], "", textMap)>
+                <#else><#assign linkText = ec.getResource().expand(linkNode["@text"]!"", "")></#if>
         </#if>
+        <#if linkText == "null"><#assign linkText = ""></#if>
         <#assign urlInstance = sri.makeUrlByType(linkNode["@url"], linkNode["@url-type"]!"transition", linkNode, linkNode["@expand-transition-url"]!"true")>
         <#if linkNode["@url-noparam"]! == "true"><#assign urlText = urlInstance.url/><#else><#assign urlText = urlInstance.urlWithParams/></#if>
         <fo:basic-link external-destination="${urlText?xml}" color="blue"><@attributeValue linkText/></fo:basic-link>
@@ -192,7 +190,7 @@ along with this software (see the LICENSE.md file). If not, see
     <#if sri.doBoundaryComments()><!-- BEGIN form-single[@name=${.node["@name"]}] --></#if>
     <#-- Use the formNode assembled based on other settings instead of the straight one from the file: -->
     <#assign formInstance = sri.getFormInstance(.node["@name"])>
-    <#assign formNode = formInstance.getFtlFormNode()>
+    <#assign formNode = formInstance.getFormNode()>
     <#t>${sri.pushSingleFormMapContext(formNode)}
     <#assign curFieldWidthIn = layoutWidthIn>
     <#assign inFieldRowBig = false>
@@ -206,7 +204,7 @@ along with this software (see the LICENSE.md file). If not, see
 </#macro>
 <#macro "field-ref">
     <#assign fieldRef = .node["@name"]>
-    <#assign fieldNode = formInstance.getFtlFieldNode(fieldRef)!>
+    <#assign fieldNode = formInstance.getFieldNode(fieldRef)!>
     <#if fieldNode??>
         <@formSingleSubField fieldNode/>
     <#else>
@@ -286,15 +284,17 @@ along with this software (see the LICENSE.md file). If not, see
 <#if sri.doBoundaryComments()><!-- BEGIN form-list[@name=${.node["@name"]}] --></#if>
     <#-- Use the formNode assembled based on other settings instead of the straight one from the file: -->
     <#assign formInstance = sri.getFormInstance(.node["@name"])>
-    <#assign formNode = formInstance.getFtlFormNode()>
+    <#assign formListInfo = formInstance.makeFormListRenderInfo()>
+    <#assign formNode = formListInfo.getFormNode()>
+    <#assign formListColumnList = formListInfo.getAllColInfo()>
+    <#assign listObject = formListInfo.getListObject(false)!>
+    <#assign listName = formNode["@list"]>
+
     <#assign isMulti = formNode["@multi"]! == "true">
     <#assign isMultiFinalRow = false>
     <#assign urlInfo = sri.makeUrlByType(formNode["@transition"], "transition", null, "false")>
-    <#assign listName = formNode["@list"]>
-    <#assign formListColumnList = formInstance.getFormListColumnInfo()>
-    <#assign listObject = formInstance.getListObject(formListColumnList)!>
     <#if !listObject?has_content><#return></#if>
-    <#assign columnCharWidths = formInstance.getFormListColumnCharWidths(formListColumnList, lineCharactersNum)>
+    <#assign columnCharWidths = formListInfo.getFormListColumnCharWidths(lineCharactersNum)>
 
     <#if !(formNode["@paginate"]! == "false") && context[listName + "Count"]?? && (context[listName + "Count"]! > 0)>
         <fo:block>${context[listName + "PageRangeLow"]} - ${context[listName + "PageRangeHigh"]} / ${context[listName + "Count"]}</fo:block>
@@ -319,7 +319,7 @@ along with this software (see the LICENSE.md file). If not, see
             <#list listObject as listEntry>
                 <#assign listEntryIndex = listEntry_index>
                 <#-- NOTE: the form-list.@list-entry attribute is handled in the ScreenForm class through this call: -->
-                ${sri.startFormListRow(formInstance, listEntry, listEntryIndex, listEntry_has_next)}
+                ${sri.startFormListRow(formListInfo, listEntry, listEntryIndex, listEntry_has_next)}
                 <fo:table-row<#if listEntryIndex % 2 == 0> background-color="#EEEEEE"</#if>>
                     <#list formListColumnList as columnFieldList>
                         <#assign cellCharWidth = columnCharWidths.get(columnFieldList_index)>
