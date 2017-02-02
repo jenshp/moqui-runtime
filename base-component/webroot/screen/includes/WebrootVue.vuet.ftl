@@ -22,7 +22,7 @@ along with this software (see the LICENSE.md file). If not, see
     <#assign navbarCompList = sri.getThemeValues("STRT_HEADER_NAVBAR_COMP")>
     <#list navbarCompList! as navbarCompUrl><input type="hidden" class="confNavPluginUrl" value="${navbarCompUrl}"></#list>
     <#if hideNav! != 'true'>
-    <div id="top"><nav class="navbar navbar-inverse navbar-fixed-top"><#-- navbar-static-top --><div class="container-fluid">
+    <div id="top"><nav class="navbar navbar-inverse"><#--  navbar-fixed-top navbar-static-top --><div class="container-fluid">
         <#-- Brand and toggle get grouped for better mobile display -->
         <header class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -41,7 +41,7 @@ along with this software (see the LICENSE.md file). If not, see
                 <li v-for="(navMenuItem, menuIndex) in navMenuList" class="dropdown">
                     <template v-if="menuIndex < (navMenuList.length - 1)">
                         <m-link v-if="navMenuItem.hasTabMenu" :href="navMenuItem.path">{{navMenuItem.title}} <i class="glyphicon glyphicon-chevron-right"></i></m-link>
-                        <template v-else-if="navMenuItem.subscreens && navMenuItem.subscreens.length > 0">
+                        <template v-else-if="navMenuItem.subscreens && navMenuItem.subscreens.length > 1">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{navMenuItem.title}} <i class="glyphicon glyphicon-chevron-right"></i></a>
                             <ul class="dropdown-menu">
                                 <li v-for="subscreen in navMenuItem.subscreens" :class="{active:subscreen.active}">
@@ -58,7 +58,7 @@ along with this software (see the LICENSE.md file). If not, see
                     </template>
                 </li>
             </ul>
-            <m-link v-if="navMenuList.length > 0" class="navbar-text" :href="navMenuList[navMenuList.length - 1].pathWithParams">{{navMenuList[navMenuList.length - 1].title}}</m-link>
+            <template v-if="navMenuList.length > 0"><m-link class="navbar-text" :href="navMenuList[navMenuList.length - 1].pathWithParams">{{navMenuList[navMenuList.length - 1].title}}</m-link></template>
             <#-- logout button -->
             <a href="${sri.buildUrl("/Login/logout").url}" data-toggle="tooltip" data-original-title="Logout ${(ec.user.userAccount.userFullName)!''}" data-placement="bottom" class="btn btn-danger btn-sm navbar-btn navbar-right"><i class="glyphicon glyphicon-off"></i></a>
             <#-- dark/light switch -->
