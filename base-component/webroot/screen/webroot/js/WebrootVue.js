@@ -139,7 +139,7 @@ moqui.retryInlineScript = function(src, count) {
 };
 
 /* ========== notify and error handling ========== */
-moqui.notifyOpts = { delay:6000, offset:{x:20,y:70}, placement:{from:'bottom',align:'right'}, z_index:1100, type:'success',
+moqui.notifyOpts = { delay:6000, offset:{x:20,y:70}, placement:{from:'top',align:'right'}, z_index:1100, type:'success',
     animate:{ enter:'animated fadeInDown', exit:'animated fadeOutUp' } };
 moqui.notifyMessages = function(messages, errors) {
     var notified = false;
@@ -436,13 +436,18 @@ Vue.component('m-form', {
         submitForm: function submitForm() {
             var jqEl = $(this.$el);
             if (this.noValidate || jqEl.valid()) {
+                // get button pressed value and disable ASAP to avoid double submit
+                var btnName = null, btnValue = null;
+                var $btn = $(document.activeElement);
+                if ($btn.length && jqEl.has($btn) && $btn.is('button[type="submit"], input[type="submit"], input[type="image"]')) {
+                    if ($btn.is('[name]')) { btnName = $btn.attr('name'); btnValue = $btn.val(); }
+                    $btn.prop('disabled', true);
+                    setTimeout(function() { $btn.prop('disabled', false); }, 3000);
+                }
                 var formData = new FormData(this.$el);
                 formData.append('moquiSessionToken', this.$root.moquiSessionToken);
                 $.each(this.fields, function (key, value) { formData.append(key, value); });
-
-                var $btn = $(document.activeElement);
-                if ($btn.length && jqEl.has($btn) && $btn.is('button[type="submit"], input[type="submit"], input[type="image"]') && $btn.is('[name]')) {
-                    formData.append($btn.attr('name'), $btn.val()); }
+                if (btnName) { formData.append(btnName, btnValue); }
 
                 // console.info('m-form parameters ' + JSON.stringify(formData));
                 // for (var key of formData.keys()) { console.log('m-form key ' + key + ' val ' + JSON.stringify(formData.get(key))); }
@@ -475,7 +480,7 @@ Vue.component('m-form', {
             highlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-success').addClass('has-error'); },
             unhighlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-error').addClass('has-success'); }
         });
-        jqEl.find('[data-toggle="tooltip"]').tooltip();
+        jqEl.find('[data-toggle="tooltip"]').tooltip({placement:'auto top'});
         if (this.focusField && this.focusField.length > 0) jqEl.find('[name^="' + this.focusField + '"]').addClass('default-focus').focus();
     }
 });
@@ -485,15 +490,26 @@ Vue.component('form-link', {
     template: '<form @submit.prevent="submitForm" class="validation-engine-init"><slot></slot></form>',
     methods: {
         submitForm: function submitForm() {
-            var jqEl = $(this.$el); if (this.noValidate || jqEl.valid()) {
+            var jqEl = $(this.$el);
+            if (this.noValidate || jqEl.valid()) {
+                // get button pressed value and disable ASAP to avoid double submit
+                var btnName = null, btnValue = null;
+                var $btn = $(document.activeElement);
+                if ($btn.length && jqEl.has($btn) && $btn.is('button[type="submit"], input[type="submit"], input[type="image"]')) {
+                    if ($btn.is('[name]')) { btnName = $btn.attr('name'); btnValue = $btn.val(); }
+                    $btn.prop('disabled', true);
+                    setTimeout(function() { $btn.prop('disabled', false); }, 3000);
+                }
                 var otherParms = this.fields;
-                var parmStr = ""; var parmList = jqEl.serializeArray();
+                var parmStr = "";
+                var parmList = jqEl.serializeArray();
                 for (var parmName in otherParms) { if (otherParms.hasOwnProperty(parmName)) {
                     if (parmStr.length > 0) { parmStr += '&'; } parmStr += (parmName + '=' + otherParms[parmName]); }}
-                var extraList = []; var plainKeyList = [];
+                var extraList = [];
+                var plainKeyList = [];
                 for (var pi=0; pi<parmList.length; pi++) {
                     var parm = parmList[pi]; var key = parm.name; var value = parm.value;
-                    if (value.length == 0 || key == "moquiSessionToken" || key.indexOf('%5B%5D') > 0) continue;
+                    if (value.trim().length == 0 || key == "moquiSessionToken" || key == "moquiFormName" || key.indexOf('%5B%5D') > 0) continue;
                     if (key.indexOf("_op") > 0 || key.indexOf("_not") > 0 || key.indexOf("_ic") > 0) { extraList.push(parm); }
                     else {
                         plainKeyList.push(key);
@@ -508,6 +524,10 @@ Vue.component('form-link', {
                         parmStr += (encodeURIComponent(eparm.name) + '=' + encodeURIComponent(eparm.value));
                     }
                 }
+                if (btnName && btnValue && btnValue.trim().length) {
+                    if (parmStr.length > 0) { parmStr += '&'; }
+                    parmStr += (encodeURIComponent(btnName) + '=' + encodeURIComponent(btnValue));
+                }
                 var url = this.action;
                 if (url.indexOf('?') > 0) { url = url + '&' + parmStr; } else { url = url + '?' + parmStr; }
                 this.$root.setUrl(url);
@@ -520,7 +540,7 @@ Vue.component('form-link', {
             highlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-success').addClass('has-error'); },
             unhighlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-error').addClass('has-success'); }
         });
-        jqEl.find('[data-toggle="tooltip"]').tooltip();
+        jqEl.find('[data-toggle="tooltip"]').tooltip({placement:'auto top'});
         if (this.focusField && this.focusField.length > 0) jqEl.find('[name=' + this.focusField + ']').addClass('default-focus').focus();
     }
 });
@@ -1018,7 +1038,7 @@ moqui.webrootVue = new Vue({
         this.notificationClient = new moqui.NotificationClient((location.protocol === 'https:' ? 'wss://' : 'ws://') + this.appHost + this.appRootPath + "/notws");
     },
     mounted: function() {
-        $('.navbar [data-toggle="tooltip"]').tooltip();
+        $('.navbar [data-toggle="tooltip"]').tooltip({ placement:'bottom', trigger:'hover' });
         $('#history-menu-link').tooltip({ placement:'bottom', trigger:'hover' });
         // load the current screen
         this.currentUrl = window.location.pathname + window.location.search;
