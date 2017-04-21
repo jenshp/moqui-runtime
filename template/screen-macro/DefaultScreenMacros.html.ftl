@@ -281,7 +281,7 @@ ${sri.renderSection(.node["@name"])}
             </div>
         </div>
         <script>$('#${cdDivId}').on('shown.bs.modal', function() {
-            $("#${cdDivId} select").select2({ });
+            $("#${cdDivId} :not(.noResetSelect2)>select:not(.noResetSelect2)").select2({ });
             var defFocus = $("#${cdDivId} .default-focus");
             if (defFocus.length) { defFocus.focus(); } else { $("#${cdDivId} form :input:visible:first").focus(); }
         });</script>
@@ -322,14 +322,14 @@ ${sri.renderSection(.node["@name"])}
             </div>
         </div>
         <script>
-            $("#${ddDivId}").on("show.bs.modal", function (e) {
+            $("#${ddDivId}").on("show.bs.modal", function () {
                 $("#${ddDivId}-body").load('${urlInstance.urlWithParams}', function() {
-                    $("#${ddDivId} select").select2({ });
+                    $("#${ddDivId} :not(.noResetSelect2)>select:not(.noResetSelect2)").select2({ });
                     var defFocus = $("#${ddDivId} .default-focus");
                     if (defFocus.length) { defFocus.focus(); } else { $("#${ddDivId} form :input:visible:first").focus(); }
                 });
             });
-            $("#${ddDivId}").on("hidden.bs.modal", function (e) { $("#${ddDivId}-body").empty(); $("#${ddDivId}-body").append('<img src="/images/wait_anim_16x16.gif" alt="Loading...">'); });
+            $("#${ddDivId}").on("hidden.bs.modal", function () { $("#${ddDivId}-body").empty(); $("#${ddDivId}-body").append('<img src="/images/wait_anim_16x16.gif" alt="Loading...">'); });
             <#if _openDialog! == ddDivId>$('#${ddDivId}').modal('show');</#if>
         </script>
         </#assign>
@@ -803,7 +803,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <#assign formSaveFindUrl = sri.buildUrl("formSaveFind").url>
                     <#assign descLabel = ec.getL10n().localize("Description")>
                     <#if activeFormListFind?has_content>
-                        <h5>Active Saved Find: ${activeFormListFind.description?html}</h5>
+                        <h5>${ec.getL10n().localize("Active Saved Find:")} ${activeFormListFind.description?html}</h5>
                     </#if>
                     <#if currentFindUrlParms?has_content>
                         <div><form class="form-inline" id="${formId}_NewFind" method="post" action="${formSaveFindUrl}">
@@ -814,7 +814,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                             </#list>
                             <div class="form-group">
                                 <label class="sr-only" for="${formId}_NewFind_description">${descLabel}</label>
-                                <input type="text" class="form-control" size="40" name="description" id="${formId}_NewFind_description" placeholder="${descLabel}">
+                                <input type="text" class="form-control" size="40" name="_findDescription" id="${formId}_NewFind_description" placeholder="${descLabel}">
                             </div>
                             <button type="submit" class="btn btn-primary btn-sm">${ec.getL10n().localize("Save New Find")}</button>
                         </form></div>
@@ -825,7 +825,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <#list userFindInfoList as userFindInfo>
                         <#assign formListFind = userFindInfo.formListFind>
                         <#assign findParameters = userFindInfo.findParameters>
-                        <#assign doFindUrl = sri.getScreenUrlInstance().cloneUrlInstance().addParameters(findParameters).removeParameter("pageIndex").removeParameter("moquiFormName").removeParameter("moquiSessionToken")>
+                        <#assign doFindUrl = sri.buildUrl(sri.getScreenUrlInstance().path).addParameters(findParameters)>
                         <#assign saveFindFormId = formId + "_SaveFind" + userFindInfo_index>
                         <div>
                         <#if currentFindUrlParms?has_content>
@@ -838,7 +838,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                                 </#list>
                                 <div class="form-group">
                                     <label class="sr-only" for="${saveFindFormId}_description">${descLabel}</label>
-                                    <input type="text" class="form-control" size="40" name="description" id="${saveFindFormId}_description" value="${formListFind.description?html}">
+                                    <input type="text" class="form-control" size="40" name="_findDescription" id="${saveFindFormId}_description" value="${formListFind.description?html}">
                                 </div>
                                 <button type="submit" name="UpdateFind" class="btn btn-primary btn-sm">${ec.getL10n().localize("Update to Current")}</button>
                                 <#if userFindInfo.isByUserId == "true"><button type="submit" name="DeleteFind" class="btn btn-danger btn-sm" onclick="return confirm('${ec.getL10n().localize("Delete")} ${formListFind.description?js_string}?');">&times;</button></#if>
@@ -869,7 +869,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                             <div class="form-group">
                                 <label class="control-label col-sm-2" for="${headerFormId}_orderByField">${ec.getL10n().localize("Order By")}</label>
                                 <div class="col-sm-10">
-                                    <select name="orderBySelect" id="${headerFormId}_orderBySelect" multiple="multiple" style="width: 100%;">
+                                    <select name="orderBySelect" id="${headerFormId}_orderBySelect" multiple="multiple" style="width: 100%;" class="noResetSelect2">
                                         <#list formNode["field"] as fieldNode><#if fieldNode["header-field"]?has_content>
                                             <#assign headerFieldNode = fieldNode["header-field"][0]>
                                             <#assign showOrderBy = (headerFieldNode["@show-order-by"])!>
@@ -918,7 +918,9 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                 </div>
             </div></div>
         </div>
-        <script>$('#${headerFormDialogId}').on('shown.bs.modal', function() { $("#${headerFormDialogId} select:not([name^='orderBySelect'])").select2({ }); })</script>
+        <script>$('#${headerFormDialogId}').on('shown.bs.modal', function() {
+            $("#${headerFormDialogId} :not(.noResetSelect2)>select:not(.noResetSelect2)").select2({ });
+        })</script>
     </#if>
     <#if isSelectColumns>
         <#assign selectColumnsDialogId = formId + "_SelColsDialog">
@@ -931,9 +933,9 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <h4 class="modal-title">${ec.getL10n().localize("Column Fields")}</h4>
                 </div>
                 <div class="modal-body">
-                    <p>Drag fields to the desired column or do not display</p>
+                    <p>${ec.getL10n().localize("Drag fields to the desired column or do not display")}</p>
                     <ul id="${selectColumnsSortableId}">
-                        <li id="hidden"><div>Do Not Display</div>
+                        <li id="hidden"><div>${ec.getL10n().localize("Do Not Display")}</div>
                             <#if fieldsNotInColumns?has_content>
                             <ul>
                             <#list fieldsNotInColumns as fieldNode>
@@ -944,16 +946,16 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                             </#if>
                         </li>
                         <#list allColInfoList as columnFieldList>
-                            <li id="column_${columnFieldList_index}"><div>Column ${columnFieldList_index + 1}</div><ul>
+                            <li id="column_${columnFieldList_index}"><div>${ec.getL10n().localize("Column")} ${columnFieldList_index + 1}</div><ul>
                             <#list columnFieldList as fieldNode>
                                 <#assign fieldSubNode = (fieldNode["header-field"][0])!(fieldNode["default-field"][0])!>
                                 <li id="${fieldNode["@name"]}"><div><@fieldTitle fieldSubNode/></div></li>
                             </#list>
                             </ul></li>
                         </#list>
-                        <#if allColInfoList?size < 10><#list allColInfoList?size..9 as ind>
-                            <li id="column_${ind}"><div>Column ${ind + 1}</div></li>
-                        </#list></#if>
+                        <#list allColInfoList?size..(allColInfoList?size + 2) as ind><#-- always add 3 more columns for flexibility -->
+                            <li id="column_${ind}"><div>${ec.getL10n().localize("Column")} ${ind + 1}</div></li>
+                        </#list>
                     </ul>
                     <form class="form-inline" id="${formId}_SelColsForm" method="post" action="${sri.buildUrl("formSelectColumns").url}">
                         <input type="hidden" name="moquiSessionToken" value="${(ec.getWeb().sessionToken)!}">
@@ -1104,7 +1106,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                         <#list userFindInfoList as userFindInfo>
                             <#assign formListFind = userFindInfo.formListFind>
                             <#assign findParameters = userFindInfo.findParameters>
-                            <#assign doFindUrl = sri.getScreenUrlInstance().cloneUrlInstance().addParameters(findParameters).removeParameter("pageIndex").removeParameter("moquiFormName").removeParameter("moquiSessionToken")>
+                            <#assign doFindUrl = sri.buildUrl(sri.getScreenUrlInstance().path).addParameters(findParameters)>
                             <option value="${formListFind.formListFindId}"<#if formListFind.formListFindId == ec.getContext().formListFindId!> selected="selected"</#if> data-action="${doFindUrl.urlWithParams}">${userFindInfo.description?html}</option>
                         </#list>
                     </select>
@@ -1621,7 +1623,9 @@ a => A, d => D, y => Y
 <#macro getMomentDateFormat dateFormat>${dateFormat?replace("a","A")?replace("d","D")?replace("y","Y")}</#macro>
 
 <#macro "date-time">
+    <#assign dtFieldNode = .node?parent?parent>
     <#assign javaFormat = .node["@format"]!>
+    <#assign validationClasses = formInstance.getFieldValidationClasses(dtFieldNode["@name"])>
     <#if !javaFormat?has_content>
         <#if .node["@type"]! == "time"><#assign javaFormat="HH:mm">
         <#elseif .node["@type"]! == "date"><#assign javaFormat="yyyy-MM-dd">
@@ -1640,7 +1644,7 @@ a => A, d => D, y => Y
 
     <#if .node["@type"]! != "time">
         <div class="input-group date" id="${id}">
-            <input type="text" class="form-control" name="<@fieldName .node/>" value="${fieldValue?html}" size="${size}" maxlength="${maxlength}"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
+            <input type="text" class="form-control<#if validationClasses?contains("required")> required</#if>" name="<@fieldName .node/>" value="${fieldValue?html}" size="${size}" maxlength="${maxlength}"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
             <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
         </div>
         <script>$('#${id}').datetimepicker({toolbarPlacement:'top', showClose:true, showClear:true, showTodayButton:true, defaultDate: '${fieldValue?html}' && moment('${fieldValue?html}','${datepickerFormat}'), format:'${datepickerFormat}', stepping:5, locale:"${ec.getUser().locale.toLanguageTag()}"});</script>
@@ -1714,6 +1718,8 @@ a => A, d => D, y => Y
     <#assign id><@fieldId .node/></#assign>
     <#assign allowMultiple = ec.getResource().expand(.node["@allow-multiple"]!, "") == "true">
     <#assign isDynamicOptions = .node["dynamic-options"]?has_content>
+    <#assign isServerSearch = false>
+    <#if isDynamicOptions><#assign doNode = .node["dynamic-options"][0]><#assign isServerSearch = doNode["@server-search"]! == "true"></#if>
     <#assign name><@fieldName .node/></#assign>
     <#assign options = sri.getFieldOptions(.node)>
     <#assign currentValue = sri.getFieldValuePlainString(ddFieldNode, "")>
@@ -1726,7 +1732,7 @@ a => A, d => D, y => Y
     <#assign optionsHasCurrent = currentDescription?has_content>
     <#if !optionsHasCurrent && .node["@current-description"]?has_content>
         <#assign currentDescription = ec.getResource().expand(.node["@current-description"], "")></#if>
-    <select name="${name}" class="<#if isDynamicOptions> dynamic-options</#if><#if .node["@style"]?has_content> ${ec.getResource().expand(.node["@style"], "")}</#if><#if validationClasses?has_content> ${validationClasses}</#if>" id="${id}"<#if allowMultiple> multiple="multiple"</#if><#if .node["@size"]?has_content> size="${.node["@size"]}"</#if><#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
+    <select name="${name}" class="<#if isDynamicOptions> dynamic-options</#if><#if .node["@style"]?has_content> ${ec.getResource().expand(.node["@style"], "")}</#if><#if validationClasses?has_content> ${validationClasses}</#if><#if isServerSearch> noResetSelect2</#if>"<#if isServerSearch> style="min-width:200px;"</#if> id="${id}"<#if allowMultiple> multiple="multiple"</#if><#if .node["@size"]?has_content> size="${.node["@size"]}"</#if><#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
     <#if !allowMultiple>
         <#-- don't add first-in-list or empty option if allowMultiple (can deselect all to be empty, including empty option allows selection of empty which isn't the point) -->
         <#if currentValue?has_content>
@@ -1742,7 +1748,7 @@ a => A, d => D, y => Y
             <option value="">&nbsp;</option>
         </#if>
     </#if>
-    <#if !isDynamicOptions>
+    <#if options?has_content>
         <#list (options.keySet())! as key>
             <#if allowMultiple && currentValueList?has_content><#assign isSelected = currentValueList?seq_contains(key)>
                 <#else><#assign isSelected = currentValue?has_content && currentValue == key></#if>
@@ -1752,28 +1758,54 @@ a => A, d => D, y => Y
     </select>
     <#-- <span>[${currentValue}]; <#list currentValueList as curValue>[${curValue!''}], </#list></span> -->
     <#if allowMultiple><input type="hidden" id="${id}_op" name="${name}_op" value="in"></#if>
-    <#if .node["@combo-box"]! == "true">
-        <script>$("#${id}").select2({ tags: true, tokenSeparators:[',',' '] });</script>
-    <#elseif .node["@search"]! != "false">
-        <script>$("#${id}").select2({ }); $("#${id}").on("select2:select", function (e) { $("#${id}").select2("open").select2("close"); });</script>
-    </#if>
     <#if isDynamicOptions>
-        <#assign doNode = .node["dynamic-options"][0]>
         <#assign depNodeList = doNode["depends-on"]>
-        <#assign doUrlInfo = sri.makeUrlByType(doNode["@transition"], "transition", .node, "false")>
+        <#assign doUrlInfo = sri.makeUrlByType(doNode["@transition"], "transition", doNode, "false")>
         <#assign doUrlParameterMap = doUrlInfo.getParameterMap()>
         <script>
-            function populate_${id}() {
+            var ${id}S2Opts = { <#if .node["@combo-box"]! == "true">tags:true, tokenSeparators:[',',' '],</#if>
+                <#if isServerSearch>minimumResultsForSearch:0, width:"100%", minimumInputLength:${doNode["@min-length"]!"1"},
+                ajax:{ url:"${doUrlInfo.url}", type:"POST", dataType:"json", cache:true, delay:${doNode["@delay"]!"300"},
+                    data:function(params) { return { moquiSessionToken: "${(ec.getWeb().sessionToken)!}", term:(params.term || ''), pageIndex:(params.page || 1) - 1
+                        <#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = doUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
+                        <#list doUrlParameterMap?keys as parameterKey><#if doUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${doUrlParameterMap.get(parameterKey)}"</#if></#list>
+                    }},
+                    processResults:function(data, params) {
+                        var isDataArray = moqui.isArray(data);
+                        var list = isDataArray ? data : data.options;
+                        var newData = [];
+                        // funny case where select2 specifies no option.@value if empty so &nbsp; ends up passed with form submit; now filtered on server for \u00a0 only and set to null
+                        <#if allowEmpty! == "true">if (!params.page || params.page <= 1) newData.push({ id:'\u00a0', text:'\u00a0' });</#if>
+                        var labelField = "${doNode["@label-field"]!"label"}"; var valueField = "${doNode["@value-field"]!"value"}";
+                        $.each(list, function(idx, curObj) {
+                            var idVal = curObj[valueField]; if (!idVal) idVal = '\u00a0';
+                            newData.push({ id:idVal, text:curObj[labelField] })
+                        });
+                        var outObj = { results:newData };
+                        if (!isDataArray) {
+                            params.page = params.page || 1; // NOTE: 1 based index, is 0 based on server side
+                            var pageSize = data.pageSize || 20;
+                            outObj.pagination = { more: (data.count ? (params.page * pageSize) < data.count : false) };
+                        }
+                        return outObj;
+                    }
+                }
+                </#if>
+            };
+            $("#${id}").select2(${id}S2Opts);
+            $("#${id}").on("select2:select", function () { $("#${id}").select2("open").select2("close"); });
+            function populate_${id}(params) {
                 <#if doNode["@depends-optional"]! != "true">
-                var hasAllParms = true;
-                <#list depNodeList as depNode>if (!$('#<@fieldIdByName depNode["@field"]/>').val()) { hasAllParms = false; } </#list>
-                if (!hasAllParms) { $("#${id}").select2("destroy"); $('#${id}').html(""); $("#${id}").select2({ }); <#-- alert("not has all parms"); --> return; }
+                    var hasAllParms = true;
+                    <#list depNodeList as depNode>if (!$('#<@fieldIdByName depNode["@field"]/>').val()) { hasAllParms = false; } </#list>
+                    if (!hasAllParms) { $("#${id}").select2("destroy"); $('#${id}').html(""); $("#${id}").select2({ }); <#-- alert("not has all parms"); --> return; }
                 </#if>
                 $.ajax({ type:"POST", url:"${doUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                         <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = doUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
                         <#t><#list doUrlParameterMap?keys as parameterKey><#if doUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${doUrlParameterMap.get(parameterKey)}"</#if></#list>
-                        <#t>}, dataType:"json" }).done(
-                    function(list) {
+                        <#t>, term:((params && params.term) || '')}, dataType:"json"}).done(
+                    function(data) {
+                        var list = moqui.isArray(data) ? data : data.options;
                         if (list) {
                             var jqEl = $("#${id}");
                             jqEl.select2("destroy");
@@ -1794,17 +1826,22 @@ a => A, d => D, y => Y
                                     jqEl.append("<option value='" + optionValue + "'>" + value["${doNode["@label-field"]!"label"}"] + "</option>");
                                 }
                             });
-                            $("#${id}").select2({ });
+                            $("#${id}").select2(${id}S2Opts);
                             setTimeout(function() { jqEl.trigger('change'); }, 50);
                         }
                     }
                 );
             }
             <#list depNodeList as depNode>
-            $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${id}(); });
+            $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${id}(<#if currentValue?has_content>{term:"${currentValue}"}</#if>); });
             </#list>
-            populate_${id}();
+            <#if isServerSearch><#if currentValue?has_content>populate_${id}({term:"${currentValue}"});</#if>
+                <#else>populate_${id}();</#if>
+
         </script>
+    <#else>
+        <script>$("#${id}").select2({ <#if .node["@combo-box"]! == "true">tags:true, tokenSeparators:[',',' ']</#if> });
+            $("#${id}").on("select2:select", function () { $("#${id}").select2("open").select2("close"); });</script>
     </#if>
 </#macro>
 
@@ -1899,15 +1936,14 @@ a => A, d => D, y => Y
         <input id="${id}" type="hidden" name="${name}" value="${fieldValue?html}"<#if ownerForm?has_content> form="${ownerForm}"</#if>>
         <#if acShowValue><span id="${id}_value" class="form-autocomplete-value"><#if valueText?has_content>${valueText?html}<#else>&nbsp;</#if></span></#if>
         <#assign depNodeList = .node["depends-on"]>
-        <#-- TODO delay? <#if .node["@ac-delay"]?has_content>delay: ${.node["@ac-delay"]},</#if> -->
         <script>
             $("#${id}_ac").typeahead({ <#if .node["@ac-min-length"]?has_content>minLength: ${.node["@ac-min-length"]},</#if> highlight: true, hint: false }, { limit: 99,
-                source: function(query, syncResults, asyncResults) { $.ajax({
+                source: moqui.debounce(function(query, syncResults, asyncResults) { $.ajax({
                     url: "${acUrlInfo.url}", type: "POST", dataType: "json", data: { term: query, moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                         <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = acUrlParameterMap.remove(depNodeField)!>, '${depNode["@parameter"]!depNodeField}': $('#<@fieldIdByName depNodeField/>').val()</#list>
                         <#t><#list acUrlParameterMap?keys as parameterKey><#if acUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${acUrlParameterMap.get(parameterKey)}"</#if></#list> },
                     success: function(data) { asyncResults($.map(data, function(item) { return { label: item.label, value: item.value } })); }
-                }); },
+                }); }, <#if .node["@ac-delay"]?has_content>${.node["@ac-delay"]}<#else>300</#if>),
                 display: function(item) { return item.label; }
             });
             $("#${id}_ac").bind('typeahead:select', function(event, item) {

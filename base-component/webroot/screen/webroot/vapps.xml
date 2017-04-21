@@ -12,7 +12,7 @@ You should have received a copy of the CC0 Public Domain Dedication
 along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
-<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
         require-authentication="false" screen-theme-type-enum-id="STT_INTERNAL" default-menu-title="Applications" allow-extra-path="true">
     <!-- NOTE: require-authentication=false so no permission required but in pre-actions if no user logged in goes to login screen -->
 
@@ -23,7 +23,7 @@ along with this software (see the LICENSE.md file). If not, see
         // jQuery, Bootstrap, Twitter TypeAhead, Form Validation (jquery-validation), Date/Time (Moment, bootstrap-datetimepicker),
         //      Drop-down (Select2, Selectivity), Notify/Growl (Bootstrap Notify), Inline Editable, Sortable Hierarchical List
         // Moqui Library (3rd party lib workarounds, NotificationClient, etc)
-        html_scripts.add('/js/CombinedBaseMin.min.js')
+        html_scripts.add('/js/CombinedBase.min.js')
 
         /* ========== Dev Mode ========== */
         // Vue JS

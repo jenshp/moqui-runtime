@@ -573,7 +573,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                         </#list>
                         <div class="form-group">
                             <label class="sr-only" for="${formId}_NewFind_description">${descLabel}</label>
-                            <input type="text" size="40" name="description" id="${formId}_NewFind_description" placeholder="${descLabel}" class="form-control required" required="required">
+                            <input type="text" size="40" name="_findDescription" id="${formId}_NewFind_description" placeholder="${descLabel}" class="form-control required" required="required">
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm">${ec.getL10n().localize("Save New Find")}</button>
                     </m-form></div>
@@ -584,7 +584,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                 <#list userFindInfoList as userFindInfo>
                     <#assign formListFind = userFindInfo.formListFind>
                     <#assign findParameters = userFindInfo.findParameters>
-                    <#assign doFindUrl = sri.getScreenUrlInstance().cloneUrlInstance().addParameters(findParameters).removeParameter("pageIndex").removeParameter("moquiFormName").removeParameter("moquiSessionToken").removeParameter("lastStandalone")>
+                    <#assign doFindUrl = sri.buildUrl(sri.getScreenUrlInstance().path).addParameters(findParameters)>
                     <#assign saveFindFormId = formId + "_SaveFind" + userFindInfo_index>
                     <div>
                     <#if currentFindUrlParms?has_content>
@@ -596,7 +596,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                             </#list>
                             <div class="form-group">
                                 <label class="sr-only" for="${saveFindFormId}_description">${descLabel}</label>
-                                <input type="text" size="40" name="description" id="${saveFindFormId}_description" value="${formListFind.description?html}" class="form-control required" required="required">
+                                <input type="text" size="40" name="_findDescription" id="${saveFindFormId}_description" value="${formListFind.description?html}" class="form-control required" required="required">
                             </div>
                             <button type="submit" name="UpdateFind" class="btn btn-primary btn-sm">${ec.getL10n().localize("Update to Current")}</button>
                             <#if userFindInfo.isByUserId == "true"><button type="submit" name="DeleteFind" class="btn btn-danger btn-sm" onclick="return confirm('${ec.getL10n().localize("Delete")} ${formListFind.description?js_string}?');">&times;</button></#if>
@@ -625,7 +625,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                         <div class="form-group">
                             <label class="control-label col-sm-2" for="${headerFormId}_orderByField">${ec.getL10n().localize("Order By")}</label>
                             <div class="col-sm-10">
-                                <select name="orderBySelect" id="${headerFormId}_orderBySelect" multiple="multiple" style="width: 100%;" class="noselect2">
+                                <select name="orderBySelect" id="${headerFormId}_orderBySelect" multiple="multiple" style="width: 100%;" class="noResetSelect2">
                                     <#list formNode["field"] as fieldNode><#if fieldNode["header-field"]?has_content>
                                         <#assign headerFieldNode = fieldNode["header-field"][0]>
                                         <#assign showOrderBy = (headerFieldNode["@show-order-by"])!>
@@ -698,9 +698,9 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                         </#list>
                     </ul></li>
                 </#list>
-                <#if allColInfoList?size < 10><#list allColInfoList?size..9 as ind>
-                    <li id="column_${ind}"><div>Column ${ind + 1}</div></li>
-                </#list></#if>
+                <#list allColInfoList?size..(allColInfoList?size + 2) as ind><#-- always add 3 more columns for flexibility -->
+                    <li id="column_${ind}"><div>${ec.getL10n().localize("Column")} ${ind + 1}</div></li>
+                </#list>
             </ul>
             <m-form class="form-inline" id="${formId}_SelColsForm" action="${sri.buildUrl("formSelectColumns").path}">
                 <input type="hidden" name="formLocation" value="${formListInfo.getFormLocation()}">
@@ -833,7 +833,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                         <#list userFindInfoList as userFindInfo>
                             <#assign formListFind = userFindInfo.formListFind>
                             <#assign findParameters = userFindInfo.findParameters>
-                            <#assign doFindUrl = sri.getScreenUrlInstance().cloneUrlInstance().addParameters(findParameters).removeParameter("pageIndex").removeParameter("moquiFormName").removeParameter("moquiSessionToken").removeParameter("lastStandalone")>
+                            <#assign doFindUrl = sri.buildUrl(sri.getScreenUrlInstance().path).addParameters(findParameters)>
                             <option value="${formListFind.formListFindId}"<#if formListFind.formListFindId == ec.getContext().formListFindId!> selected="selected"</#if> data-action="${doFindUrl.pathWithParams}">${userFindInfo.description?html}</option>
                         </#list>
                     </select>
@@ -1362,21 +1362,22 @@ a => A, d => D, y => Y
     <#if isDynamicOptions>
         <#assign doNode = .node["dynamic-options"][0]>
         <#assign depNodeList = doNode["depends-on"]>
-        <#assign doUrlInfo = sri.makeUrlByType(doNode["@transition"], "transition", .node, "false")>
+        <#assign doUrlInfo = sri.makeUrlByType(doNode["@transition"], "transition", doNode, "false")>
         <#assign doUrlParameterMap = doUrlInfo.getParameterMap()>
     </#if>
     <drop-down name="${name}" id="${tlId}" class="<#if isDynamicOptions> dynamic-options</#if><#if .node["@style"]?has_content> ${ec.getResource().expand(.node["@style"], "")}</#if><#if validationClasses?has_content> ${validationClasses}</#if>"<#rt>
             <#t><#if allowMultiple> multiple="multiple"</#if><#if allowEmpty> :allow-empty="true"</#if><#if .node["@combo-box"]! == "true"> :combo="true"</#if>
             <#t><#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if>
             <#t><#if ownerForm?has_content> form="${ownerForm}"</#if><#if .node["@size"]?has_content> size="${.node["@size"]}"</#if>
+            <#t><#if allowMultiple> :value="[<#list currentValueList as curVal><#if curVal?has_content>'${curVal}',</#if></#list>]"<#else> value="${currentValue!}"</#if>
             <#if isDynamicOptions> options-url="${doUrlInfo.url}" value-field="${doNode["@value-field"]!"value"}" label-field="${doNode["@label-field"]!"label"}"<#if doNode["@depends-optional"]! == "true"> :depends-optional="true"</#if>
                 <#t> :depends-on="{<#list depNodeList as depNode><#local depNodeField = depNode["@field"]>'${depNode["@parameter"]!depNodeField}':'<@fieldIdByName depNodeField/>'<#sep>, </#list>}"
                 <#t> :options-parameters="{<#list doUrlParameterMap?keys as parameterKey><#if doUrlParameterMap.get(parameterKey)?has_content>'${parameterKey}':'${doUrlParameterMap.get(parameterKey)}', </#if></#list>}"
-            <#t><#else>
-                <#t><#if allowMultiple> :value="[<#list currentValueList as curVal><#if curVal?has_content>'${curVal}',</#if></#list>]"<#else> value="${currentValue!}"</#if>
+                <#t><#if doNode["@server-search"]! == "true"> :server-search="true"</#if><#if doNode["@delay"]?has_content> :server-delay="${doNode["@delay"]}"</#if><#if doNode["@min-length"]?has_content> :server-min-length="${doNode["@min-length"]}"</#if>
+            <#t></#if>
                 :options="[<#if currentValue?has_content && !allowMultiple && !optionsHasCurrent>{id:'${currentValue}',text:'<#if currentDescription?has_content>${currentDescription}<#else>${currentValue}</#if>'},</#if><#rt>
                     <#t><#if allowEmpty || !(options?has_content)>{id:'',text:'\u00a0'},</#if><#list (options.keySet())! as key>{id:'<#if key?has_content>${key}<#else>\u00a0</#if>',text:'${options.get(key)?js_string}'}<#sep>,</#list>]"
-            <#lt></#if>>
+            <#lt>>
             <#-- support <#if .node["@current"]! == "first-in-list"> again? -->
     </drop-down>
     <#-- <span>[${currentValue}]; <#list currentValueList as curValue>[${curValue!''}], </#list></span> -->

@@ -13,7 +13,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd">
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd">
 
     <transition name="clearCache">
         <actions><script>ec.cache.getCache(cacheName).clear()</script></actions>
@@ -22,7 +22,7 @@ along with this software (see the LICENSE.md file). If not, see
     <transition name="clearArtifactCaches">
         <actions><script>
             ['entity.definition', 'entity.location', 'entity.data.feed.info', 'service.location',
-            'kie.component.releaseId', 'kie.session.component', 'screen.location', 'screen.url',
+            'kie.component.releaseId', 'kie.session.component', 'screen.location', 'screen.location.perm', 'screen.url',
             'screen.template.mode', 'screen.template.location', 'screen.find.path',
             'resource.xml-actions.location', 'resource.groovy.location',
             'resource.ftl.location', 'resource.gstring.location',
