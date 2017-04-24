@@ -12,7 +12,7 @@ You should have received a copy of the CC0 Public Domain Dedication
 along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
-<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
         require-authentication="false">
     <!-- NOTE: require-authentication=false is required to allow sub-screens to decide, and because the Login screen is below this. -->
     <always-actions>
@@ -29,11 +29,15 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
     <transition name="menuData" read-only="true" begin-transaction="false">
         <actions><script><![CDATA[
-            List menuDataList = sri.getMenuData(sri.screenUrlInfo.extraPathNameList)
-            if (menuDataList != null) ec.web.sendJsonResponse(menuDataList)
+            try {
+                List menuDataList = sri.getMenuData(sri.screenUrlInfo.extraPathNameList)
+                if (menuDataList != null) ec.web.sendJsonResponse(menuDataList)
+            } catch (Exception e) { logger.warn("Error in menuData for ${sri.screenUrlInfo.extraPathNameList}", e) }
         ]]></script></actions>
         <default-response type="none"/>
     </transition>
+    <transition name="email"><path-parameter name="emailMessageId"/><actions><script>ec.web.viewEmailMessage()</script></actions>
+        <default-response type="none"/></transition>
 
     <subscreens default-item="apps">
         <subscreens-item name="toolstatic" location="component://tools/screen/toolstatic.xml" menu-include="false"/>

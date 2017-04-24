@@ -13,7 +13,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
         require-authentication="false" track-artifact-hit="false" default-menu-include="false">
     <!-- NOTE: require-authentication=false is required to allow transitions to decide. -->
 
@@ -31,7 +31,11 @@ along with this software (see the LICENSE.md file). If not, see
 
     An example request:
 
-    curl -X GET -u john.doe:moqui http://localhost:8080/rest/api_key
+    curl -X GET -H "Accept: text/plain" -u john.doe:moqui http://localhost:8080/rest/api_key
+
+    To see an error response (401) for the wrong password:
+
+    curl -X GET -H "Accept: text/plain" -u john.doe:foo -i http://localhost:8080/rest/api_key
 
     Put the value from that request in the "api_key" header for authc on other requests.
 

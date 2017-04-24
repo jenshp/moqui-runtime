@@ -234,88 +234,58 @@ ${sri.renderSection(.node["@name"])}
 
 <#macro "container-panel">
     <#assign panelId><@nodeId .node/></#assign>
-    <#-- DEJ 24 Jan 2014: disabling dynamic panels for now, need to research with new Metis admin theme:
-    <#if .node["@dynamic"]! == "true">
-        <#assign afterScreenScript>
-        $("#${panelId}").layout({
-        defaults: { closable: true, resizable: true, slidable: false, livePaneResizing: true, spacing_open: 5 },
-        <#if .node["panel-header"]?has_content><#assign panelNode = .node["panel-header"][0]>north: { showOverflowOnHover: true, closable: ${panelNode["@closable"]!"true"}, resizable: ${panelNode["@resizable"]!"false"}, spacing_open: ${panelNode["@spacing"]!"5"}, size: "${panelNode["@size"]!"auto"}"<#if panelNode["@size-min"]?has_content>, minSize: ${panelNode["@size-min"]}</#if><#if panelNode["@size-min"]?has_content>, maxSize: ${panelNode["@size-max"]}</#if> },</#if>
-        <#if .node["panel-footer"]?has_content><#assign panelNode = .node["panel-footer"][0]>south: { showOverflowOnHover: true, closable: ${panelNode["@closable"]!"true"}, resizable: ${panelNode["@resizable"]!"false"}, spacing_open: ${panelNode["@spacing"]!"5"}, size: "${panelNode["@size"]!"auto"}"<#if panelNode["@size-min"]?has_content>, minSize: ${panelNode["@size-min"]}</#if><#if panelNode["@size-min"]?has_content>, maxSize: ${panelNode["@size-max"]}</#if> },</#if>
-        <#if .node["panel-left"]?has_content><#assign panelNode = .node["panel-left"][0]>west: { closable: ${panelNode["@closable"]!"true"}, resizable: ${panelNode["@resizable"]!"true"}, spacing_open: ${panelNode["@spacing"]!"5"}, size: "${panelNode["@size"]!"180"}"<#if panelNode["@size-min"]?has_content>, minSize: ${panelNode["@size-min"]}</#if><#if panelNode["@size-min"]?has_content>, maxSize: ${panelNode["@size-max"]}</#if> },</#if>
-        <#if .node["panel-right"]?has_content><#assign panelNode = .node["panel-right"][0]>east: { closable: ${panelNode["@closable"]!"true"}, resizable: ${panelNode["@resizable"]!"true"}, spacing_open: ${panelNode["@spacing"]!"5"}, size: "${panelNode["@size"]!"180"}"<#if panelNode["@size-min"]?has_content>, minSize: ${panelNode["@size-min"]}</#if><#if panelNode["@size-min"]?has_content>, maxSize: ${panelNode["@size-max"]}</#if> },</#if>
-        center: { minWidth: 200 }
-        });
-        </#assign>
-        <#t>${sri.appendToScriptWriter(afterScreenScript)}
-        <div<#if panelId?has_content> id="${panelId}"</#if>>
-            <#if .node["panel-header"]?has_content>
-                <div<#if panelId?has_content> id="${panelId}-header"</#if> class="ui-layout-north ui-helper-clearfix"><#recurse .node["panel-header"][0]>
-                </div></#if>
+    <div<#if panelId?has_content> id="${panelId}"</#if> class="container-panel-outer">
+        <#if .node["panel-header"]?has_content>
+            <div<#if panelId?has_content> id="${panelId}-header"</#if> class="container-panel-header"><#recurse .node["panel-header"][0]>
+            </div>
+        </#if>
+        <div class="container-panel-middle">
             <#if .node["panel-left"]?has_content>
-                <div<#if panelId?has_content> id="${panelId}-left"</#if> class="ui-layout-west"><#recurse .node["panel-left"][0]>
+                <div<#if panelId?has_content> id="${panelId}-left"</#if> class="container-panel-left" style="width: ${.node["panel-left"][0]["@size"]!"180"}px;"><#recurse .node["panel-left"][0]>
                 </div>
             </#if>
-            <div<#if panelId?has_content> id="${panelId}-center"</#if> class="ui-layout-center"><#recurse .node["panel-center"][0]>
-            </div>
-            <#if .node["panel-right"]?has_content>
-                <div<#if panelId?has_content> id="${panelId}-right"</#if> class="ui-layout-east"><#recurse .node["panel-right"][0]>
-                </div>
-            </#if>
-            <#if .node["panel-footer"]?has_content>
-                <div<#if panelId?has_content> id="${panelId}-footer"</#if> class="ui-layout-south"><#recurse .node["panel-footer"][0]>
-                </div></#if>
+            <#assign centerClass><#if .node["panel-left"]?has_content><#if .node["panel-right"]?has_content>container-panel-center-both<#else>container-panel-center-left</#if><#else><#if .node["panel-right"]?has_content>container-panel-center-right<#else>container-panel-center-only</#if></#if></#assign>
+            <div<#if panelId?has_content> id="${panelId}-center"</#if> class="${centerClass}"><#recurse .node["panel-center"][0]>
         </div>
-    <#else>
-    -->
-        <div<#if panelId?has_content> id="${panelId}"</#if> class="container-panel-outer">
-            <#if .node["panel-header"]?has_content>
-                <div<#if panelId?has_content> id="${panelId}-header"</#if> class="container-panel-header"><#recurse .node["panel-header"][0]>
-                </div>
-            </#if>
-            <div class="container-panel-middle">
-                <#if .node["panel-left"]?has_content>
-                    <div<#if panelId?has_content> id="${panelId}-left"</#if> class="container-panel-left" style="width: ${.node["panel-left"][0]["@size"]!"180"}px;"><#recurse .node["panel-left"][0]>
-                    </div>
-                </#if>
-                <#assign centerClass><#if .node["panel-left"]?has_content><#if .node["panel-right"]?has_content>container-panel-center-both<#else>container-panel-center-left</#if><#else><#if .node["panel-right"]?has_content>container-panel-center-right<#else>container-panel-center-only</#if></#if></#assign>
-                <div<#if panelId?has_content> id="${panelId}-center"</#if> class="${centerClass}"><#recurse .node["panel-center"][0]>
+        <#if .node["panel-right"]?has_content>
+            <div<#if panelId?has_content> id="${panelId}-right"</#if> class="container-panel-right" style="width: ${.node["panel-right"][0]["@size"]!"180"}px;"><#recurse .node["panel-right"][0]>
             </div>
-            <#if .node["panel-right"]?has_content>
-                <div<#if panelId?has_content> id="${panelId}-right"</#if> class="container-panel-right" style="width: ${.node["panel-right"][0]["@size"]!"180"}px;"><#recurse .node["panel-right"][0]>
-                </div>
-            </#if>
-            </div>
-            <#if .node["panel-footer"]?has_content>
-                <div<#if panelId?has_content> id="${panelId}-footer"</#if> class="container-panel-footer"><#recurse .node["panel-footer"][0]>
-                </div>
-            </#if>
+        </#if>
         </div>
-    <#-- </#if> -->
+        <#if .node["panel-footer"]?has_content>
+            <div<#if panelId?has_content> id="${panelId}-footer"</#if> class="container-panel-footer"><#recurse .node["panel-footer"][0]>
+            </div>
+        </#if>
+    </div>
 </#macro>
 
 <#macro "container-dialog">
-    <#assign buttonText = ec.getResource().expand(.node["@button-text"], "")>
-    <#assign cdDivId><@nodeId .node/></#assign>
-    <button id="${cdDivId}-button" type="button" data-toggle="modal" data-target="#${cdDivId}" data-original-title="${buttonText}" data-placement="bottom" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-share"></i> ${buttonText}</button>
-    <#if _openDialog! == cdDivId><#assign afterScreenScript>$('#${cdDivId}').modal('show'); </#assign><#t>${sri.appendToScriptWriter(afterScreenScript)}</#if>
-    <div id="${cdDivId}" class="modal container-dialog" aria-hidden="true" style="display: none;" tabindex="-1">
-        <div class="modal-dialog" style="width: ${.node["@width"]!"760"}px;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">${buttonText}</h4>
+    <#if .node["@condition"]?has_content><#assign conditionResult = ec.getResource().condition(.node["@condition"], "")><#else><#assign conditionResult = true></#if>
+    <#if conditionResult>
+        <#assign buttonText = ec.getResource().expand(.node["@button-text"], "")>
+        <#assign cdDivId><@nodeId .node/></#assign>
+        <button id="${cdDivId}-button" type="button" data-toggle="modal" data-target="#${cdDivId}" data-original-title="${buttonText}" data-placement="bottom" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-share"></i> ${buttonText}</button>
+        <#if _openDialog! == cdDivId><#assign afterScreenScript>$('#${cdDivId}').modal('show'); </#assign><#t>${sri.appendToScriptWriter(afterScreenScript)}</#if>
+        <div id="${cdDivId}" class="modal container-dialog" aria-hidden="true" style="display: none;" tabindex="-1">
+            <div class="modal-dialog" style="width: ${.node["@width"]!"760"}px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">${buttonText}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <#recurse>
+                    </div>
+                    <#-- <div class="modal-footer"><button type="button" class="btn btn-primary" data-dismiss="modal">Close</button></div> -->
                 </div>
-                <div class="modal-body">
-                    <#recurse>
-                </div>
-                <#-- <div class="modal-footer"><button type="button" class="btn btn-primary" data-dismiss="modal">Close</button></div> -->
             </div>
         </div>
-    </div>
-    <script>$('#${cdDivId}').on('shown.bs.modal', function() {
-        $("#${cdDivId} select").select2({ });
-        $("#${cdDivId} .default-focus").focus();
-    });</script>
+        <script>$('#${cdDivId}').on('shown.bs.modal', function() {
+            $("#${cdDivId} :not(.noResetSelect2)>select:not(.noResetSelect2)").select2({ });
+            var defFocus = $("#${cdDivId} .default-focus");
+            if (defFocus.length) { defFocus.focus(); } else { $("#${cdDivId} form :input:visible:first").focus(); }
+        });</script>
+    </#if>
 </#macro>
 
 <#macro "dynamic-container">
@@ -329,34 +299,42 @@ ${sri.renderSection(.node["@name"])}
 </#macro>
 
 <#macro "dynamic-dialog">
-    <#assign buttonText = ec.getResource().expand(.node["@button-text"], "")>
-    <#assign urlInstance = sri.makeUrlByType(.node["@transition"], "transition", .node, "true")>
-    <#assign ddDivId><@nodeId .node/></#assign>
+    <#if .node["@condition"]?has_content><#assign conditionResult = ec.getResource().condition(.node["@condition"], "")><#else><#assign conditionResult = true></#if>
+    <#if conditionResult>
+        <#assign buttonText = ec.getResource().expand(.node["@button-text"], "")>
+        <#assign urlInstance = sri.makeUrlByType(.node["@transition"], "transition", .node, "true")>
+        <#assign ddDivId><@nodeId .node/></#assign>
 
-    <button id="${ddDivId}-button" type="button" data-toggle="modal" data-target="#${ddDivId}" data-original-title="${buttonText}" data-placement="bottom" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-share"></i> ${buttonText}</button>
-    <#assign afterFormText>
-    <div id="${ddDivId}" class="modal dynamic-dialog" aria-hidden="true" style="display: none;" tabindex="-1">
-        <div class="modal-dialog" style="width: ${.node["@width"]!"760"}px;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">${buttonText}</h4>
+        <button id="${ddDivId}-button" type="button" data-toggle="modal" data-target="#${ddDivId}" data-original-title="${buttonText}" data-placement="bottom" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-share"></i> ${buttonText}</button>
+        <#assign afterFormText>
+        <div id="${ddDivId}" class="modal dynamic-dialog" aria-hidden="true" style="display: none;" tabindex="-1">
+            <div class="modal-dialog" style="width: ${.node["@width"]!"760"}px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">${buttonText}</h4>
+                    </div>
+                    <div class="modal-body" id="${ddDivId}-body">
+                        <img src="/images/wait_anim_16x16.gif" alt="Loading...">
+                    </div>
+                    <#-- <div class="modal-footer"><button type="button" class="btn btn-primary" data-dismiss="modal">Close</button></div> -->
                 </div>
-                <div class="modal-body" id="${ddDivId}-body">
-                    <img src="/images/wait_anim_16x16.gif" alt="Loading...">
-                </div>
-                <#-- <div class="modal-footer"><button type="button" class="btn btn-primary" data-dismiss="modal">Close</button></div> -->
             </div>
         </div>
-    </div>
-    <script>
-        $("#${ddDivId}").on("show.bs.modal", function (e) { $("#${ddDivId}-body").load('${urlInstance.urlWithParams}'); });
-        $("#${ddDivId}").on("hidden.bs.modal", function (e) { $("#${ddDivId}-body").empty(); $("#${ddDivId}-body").append('<img src="/images/wait_anim_16x16.gif" alt="Loading...">'); });
-        $('#${ddDivId}').on('shown.bs.modal', function() {$("#${ddDivId} select").select2({ });});
-        <#if _openDialog! == ddDivId>$('#${ddDivId}').modal('show');</#if>
-    </script>
-    </#assign>
-    <#t>${sri.appendToAfterScreenWriter(afterFormText)}
+        <script>
+            $("#${ddDivId}").on("show.bs.modal", function () {
+                $("#${ddDivId}-body").load('${urlInstance.urlWithParams}', function() {
+                    $("#${ddDivId} :not(.noResetSelect2)>select:not(.noResetSelect2)").select2({ });
+                    var defFocus = $("#${ddDivId} .default-focus");
+                    if (defFocus.length) { defFocus.focus(); } else { $("#${ddDivId} form :input:visible:first").focus(); }
+                });
+            });
+            $("#${ddDivId}").on("hidden.bs.modal", function () { $("#${ddDivId}-body").empty(); $("#${ddDivId}-body").append('<img src="/images/wait_anim_16x16.gif" alt="Loading...">'); });
+            <#if _openDialog! == ddDivId>$('#${ddDivId}').modal('show');</#if>
+        </script>
+        </#assign>
+        <#t>${sri.appendToAfterScreenWriter(afterFormText)}
+    </#if>
 </#macro>
 
 <#-- ==================== Includes ==================== -->
@@ -368,7 +346,13 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
 
 <#-- ============== Tree ============== -->
 <#macro tree>
-    <#assign ajaxUrlInfo = sri.makeUrlByType(.node["@transition"]!"getTreeSubNodes", "transition", .node, "true")>
+    <#if .node["@transition"]?has_content>
+        <#assign ajaxUrlInfo = sri.makeUrlByType(.node["@transition"], "transition", .node, "true")>
+        <#assign itemsUrl = ajaxUrlInfo.url>
+    <#else>
+        <#assign ajaxUrlInfo = sri.makeUrlByType("actions", "transition", .node, "true")>
+        <#assign itemsUrl = ajaxUrlInfo.url + "/" + .node["@name"]>
+    </#if>
     <#assign ajaxParms = ajaxUrlInfo.getParameterMap()>
 
     <div id="${.node["@name"]}"></div>
@@ -377,7 +361,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         "core" : { "themes" : { "url" : false, "dots" : true, "icons" : false }, "multiple" : false,
             'data' : {
                 dataType: 'json', type: 'POST',
-                url: function (node) { return '${ajaxUrlInfo.url}'; },
+                url: function (node) { return '${itemsUrl}'; },
                 data: function (node) { return { treeNodeId: node.id,
                     treeNodeName: (node.li_attr && node.li_attr.treeNodeName ? node.li_attr.treeNodeName : ''),
                     moquiSessionToken: "${(ec.getWeb().sessionToken)!}"
@@ -394,8 +378,8 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
 <#-- ============== Render Mode Elements ============== -->
 <#macro "render-mode">
 <#if .node["text"]?has_content>
-    <#list .node["text"] as textNode><#if !textNode["@type"]?has_content || textNode["@type"] == "any"><#assign textToUse = textNode/></#if></#list>
-    <#list .node["text"] as textNode><#if textNode["@type"]?has_content && textNode["@type"] == sri.getRenderMode()><#assign textToUse = textNode></#if></#list>
+    <#list .node["text"] as textNode><#if !textNode["@type"]?has_content || textNode["@type"] == "any"><#local textToUse = textNode/><#-- text node type: ${textNode["@type"]!'any'} --></#if></#list>
+    <#list .node["text"] as textNode><#if textNode["@type"]?has_content && textNode["@type"]?split(",")?seq_contains(sri.getRenderMode())><#local textToUse = textNode></#if></#list>
     <#if textToUse??>
         <#if textToUse["@location"]?has_content>
           <#assign textLocation = ec.getResource().expandNoL10n(textToUse["@location"], "")>
@@ -461,7 +445,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                 <#if linkNode["@url-noparam"]! == "true"><#assign urlText = urlInstance.url/>
                     <#else><#assign urlText = urlInstance.urlWithParams/></#if>
             </#if>
-            <#rt><a href="${urlText}"<#if linkFormId?has_content> id="${linkFormId}"</#if><#if linkNode["@target-window"]?has_content> target="${linkNode["@target-window"]}"</#if><#if confirmationMessage?has_content> onclick="return confirm('${confirmationMessage?js_string}')"</#if> class="<#if linkNode["@link-type"]! != "anchor">btn btn-primary btn-sm</#if><#if linkNode["@style"]?has_content> ${ec.getResource().expandNoL10n(linkNode["@style"], "")}</#if>"<#if linkNode["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(linkNode["@tooltip"], "")}"</#if>><#if iconClass?has_content><i class="${iconClass}"></i></#if>
+            <#rt><a href="${urlText}"<#if linkFormId?has_content> id="${linkFormId}"</#if><#if linkNode["@target-window"]?has_content> target="${linkNode["@target-window"]}"</#if><#if confirmationMessage?has_content> onclick="return confirm('${confirmationMessage?js_string}')"</#if> class="<#if linkNode["@link-type"]! != "anchor">btn btn-primary btn-sm</#if><#if linkNode["@style"]?has_content> ${ec.getResource().expandNoL10n(linkNode["@style"], "")}</#if>"<#if linkNode["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(linkNode["@tooltip"], "")}"</#if>><#if iconClass?has_content><i class="${iconClass}"></i> </#if>
             <#t><#if linkNode["image"]?has_content><#visit linkNode["image"][0]><#else>${linkText}</#if>
             <#t></a>
         <#else>
@@ -519,7 +503,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         <#else><#assign conditionResult = true></#if>
     <#if conditionResult>
         <#if .node["@hover"]! == "true"><span class="hover-image-container"></#if>
-        <img src="${sri.makeUrlByType(.node["@url"], .node["@url-type"]!"content", .node, "true").getUrlWithParams()}" alt="${.node["@alt"]!"image"}"<#if .node["@id"]?has_content> id="${.node["@id"]}"</#if><#if .node["@width"]?has_content> width="${.node["@width"]}"</#if><#if .node["@height"]?has_content>height="${.node["@height"]}"</#if><#if .node["@style"]?has_content> class="${ec.getResource().expandNoL10n(.node["@style"], "")}"</#if>/>
+        <img src="${sri.makeUrlByType(.node["@url"], .node["@url-type"]!"content", .node, "true").getUrlWithParams()}" alt="${ec.resource.expand(.node["@alt"]!"image", "")}"<#if .node["@id"]?has_content> id="${.node["@id"]}"</#if><#if .node["@width"]?has_content> width="${.node["@width"]}"</#if><#if .node["@height"]?has_content>height="${.node["@height"]}"</#if><#if .node["@style"]?has_content> class="${ec.getResource().expandNoL10n(.node["@style"], "")}"</#if>/>
         <#if .node["@hover"]! == "true"><img src="${sri.makeUrlByType(.node["@url"], .node["@url-type"]!"content", .node, "true").getUrlWithParams()}" class="hover-image" alt="${.node["@alt"]!"image"}"/></span></#if>
     </#if>
 </#macro>
@@ -527,16 +511,15 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     <#if .node["@condition"]?has_content><#assign conditionResult = ec.getResource().condition(.node["@condition"], "")><#else><#assign conditionResult = true></#if>
     <#if conditionResult>
         <#assign labelType = .node["@type"]!"span">
+        <#assign labelDivId><@nodeId .node/></#assign>
         <#assign textMap = "">
         <#if .node["@text-map"]?has_content><#assign textMap = ec.getResource().expression(.node["@text-map"], "")!></#if>
-        <#if textMap?has_content>
-            <#assign labelValue = ec.getResource().expand(.node["@text"], "", textMap)>
-        <#else>
-            <#assign labelValue = ec.getResource().expand(.node["@text"], "")/>
-        </#if>
-        <#assign labelDivId><@nodeId .node/></#assign>
+        <#if textMap?has_content><#assign labelValue = ec.getResource().expand(.node["@text"], "", textMap)>
+        <#else><#assign labelValue = ec.getResource().expand(.node["@text"], "")/></#if>
         <#if labelValue?trim?has_content || .node["@condition"]?has_content>
-        <${labelType}<#if labelDivId?has_content> id="${labelDivId}"</#if><#if .node["@style"]?has_content> class="${ec.getResource().expandNoL10n(.node["@style"], "")}"</#if><#if .node["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node["@tooltip"], "")}"</#if>><#if !.node["@encode"]?has_content || .node["@encode"] == "true">${labelValue?html?replace("\n", "<br>")}<#else>${labelValue}</#if></${labelType}>
+            <#if .node["@encode"]! != "false"><#assign labelValue = labelValue?html>
+                <#if labelType != 'code' && labelType != 'pre'><#assign labelValue = labelValue?replace("\n", "<br>")></#if></#if>
+<${labelType}<#if labelDivId?has_content> id="${labelDivId}"</#if> class="text-inline<#if .node["@style"]?has_content> ${ec.getResource().expandNoL10n(.node["@style"], "")}</#if>"<#if .node["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node["@tooltip"], "")}"</#if>>${labelValue}</${labelType}>
         </#if>
     </#if>
 </#macro>
@@ -588,7 +571,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         <input type="hidden" name="moquiFormName" value="${formNode["@name"]}">
         <input type="hidden" name="moquiSessionToken" value="${(ec.getWeb().sessionToken)!}">
     </#if>
-        <fieldset class="form-horizontal"><#-- was form-single-outer -->
+        <fieldset class="form-horizontal"<#if urlInstance.disableLink> disabled="disabled"</#if>>
         <#if formNode["field-layout"]?has_content>
             <#recurse formNode["field-layout"][0]/>
         <#else>
@@ -602,7 +585,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                 highlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-success').addClass('has-error'); },
                 unhighlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-error').addClass('has-success'); }
             });
-            $('#${formId} [data-toggle="tooltip"]').tooltip();
+            $('#${formId} [data-toggle="tooltip"]').tooltip({placement:'auto top'});
 
             <#-- if background-submit=true init ajaxForm; for examples see http://www.malsup.com/jquery/form/#ajaxForm -->
             <#if formNode["@background-submit"]! == "true">
@@ -622,7 +605,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         </script>
     </#if>
     <#if formNode["@focus-field"]?has_content>
-        <script>$("#${formId}_${formNode["@focus-field"]}").addClass('default-focus').focus();</script>
+        <script>$("#${formId}").find('[name^="${formNode["@focus-field"]}"]').addClass('default-focus').focus();</script>
     </#if>
     <#t>${sri.popContext()}<#-- context was pushed for the form-single so pop here at the end -->
     <#if sri.doBoundaryComments()><!-- END   form-single[@name=${.node["@name"]}] --></#if>
@@ -820,7 +803,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <#assign formSaveFindUrl = sri.buildUrl("formSaveFind").url>
                     <#assign descLabel = ec.getL10n().localize("Description")>
                     <#if activeFormListFind?has_content>
-                        <h5>Active Saved Find: ${activeFormListFind.description?html}</h5>
+                        <h5>${ec.getL10n().localize("Active Saved Find:")} ${activeFormListFind.description?html}</h5>
                     </#if>
                     <#if currentFindUrlParms?has_content>
                         <div><form class="form-inline" id="${formId}_NewFind" method="post" action="${formSaveFindUrl}">
@@ -831,7 +814,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                             </#list>
                             <div class="form-group">
                                 <label class="sr-only" for="${formId}_NewFind_description">${descLabel}</label>
-                                <input type="text" class="form-control" size="40" name="description" id="${formId}_NewFind_description" placeholder="${descLabel}">
+                                <input type="text" class="form-control" size="40" name="_findDescription" id="${formId}_NewFind_description" placeholder="${descLabel}">
                             </div>
                             <button type="submit" class="btn btn-primary btn-sm">${ec.getL10n().localize("Save New Find")}</button>
                         </form></div>
@@ -842,7 +825,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <#list userFindInfoList as userFindInfo>
                         <#assign formListFind = userFindInfo.formListFind>
                         <#assign findParameters = userFindInfo.findParameters>
-                        <#assign doFindUrl = sri.getScreenUrlInstance().cloneUrlInstance().addParameters(findParameters).removeParameter("pageIndex").removeParameter("moquiFormName").removeParameter("moquiSessionToken")>
+                        <#assign doFindUrl = sri.buildUrl(sri.getScreenUrlInstance().path).addParameters(findParameters)>
                         <#assign saveFindFormId = formId + "_SaveFind" + userFindInfo_index>
                         <div>
                         <#if currentFindUrlParms?has_content>
@@ -855,7 +838,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                                 </#list>
                                 <div class="form-group">
                                     <label class="sr-only" for="${saveFindFormId}_description">${descLabel}</label>
-                                    <input type="text" class="form-control" size="40" name="description" id="${saveFindFormId}_description" value="${formListFind.description?html}">
+                                    <input type="text" class="form-control" size="40" name="_findDescription" id="${saveFindFormId}_description" value="${formListFind.description?html}">
                                 </div>
                                 <button type="submit" name="UpdateFind" class="btn btn-primary btn-sm">${ec.getL10n().localize("Update to Current")}</button>
                                 <#if userFindInfo.isByUserId == "true"><button type="submit" name="DeleteFind" class="btn btn-danger btn-sm" onclick="return confirm('${ec.getL10n().localize("Delete")} ${formListFind.description?js_string}?');">&times;</button></#if>
@@ -886,7 +869,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                             <div class="form-group">
                                 <label class="control-label col-sm-2" for="${headerFormId}_orderByField">${ec.getL10n().localize("Order By")}</label>
                                 <div class="col-sm-10">
-                                    <select name="orderBySelect" id="${headerFormId}_orderBySelect" multiple="multiple" style="width: 100%;">
+                                    <select name="orderBySelect" id="${headerFormId}_orderBySelect" multiple="multiple" style="width: 100%;" class="noResetSelect2">
                                         <#list formNode["field"] as fieldNode><#if fieldNode["header-field"]?has_content>
                                             <#assign headerFieldNode = fieldNode["header-field"][0]>
                                             <#assign showOrderBy = (headerFieldNode["@show-order-by"])!>
@@ -935,7 +918,9 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                 </div>
             </div></div>
         </div>
-        <script>$('#${headerFormDialogId}').on('shown.bs.modal', function() { $("#${headerFormDialogId} select:not([name^='orderBySelect'])").select2({ }); })</script>
+        <script>$('#${headerFormDialogId}').on('shown.bs.modal', function() {
+            $("#${headerFormDialogId} :not(.noResetSelect2)>select:not(.noResetSelect2)").select2({ });
+        })</script>
     </#if>
     <#if isSelectColumns>
         <#assign selectColumnsDialogId = formId + "_SelColsDialog">
@@ -948,9 +933,9 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <h4 class="modal-title">${ec.getL10n().localize("Column Fields")}</h4>
                 </div>
                 <div class="modal-body">
-                    <p>Drag fields to the desired column or do not display</p>
+                    <p>${ec.getL10n().localize("Drag fields to the desired column or do not display")}</p>
                     <ul id="${selectColumnsSortableId}">
-                        <li id="hidden"><div>Do Not Display</div>
+                        <li id="hidden"><div>${ec.getL10n().localize("Do Not Display")}</div>
                             <#if fieldsNotInColumns?has_content>
                             <ul>
                             <#list fieldsNotInColumns as fieldNode>
@@ -961,16 +946,16 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                             </#if>
                         </li>
                         <#list allColInfoList as columnFieldList>
-                            <li id="column_${columnFieldList_index}"><div>Column ${columnFieldList_index + 1}</div><ul>
+                            <li id="column_${columnFieldList_index}"><div>${ec.getL10n().localize("Column")} ${columnFieldList_index + 1}</div><ul>
                             <#list columnFieldList as fieldNode>
                                 <#assign fieldSubNode = (fieldNode["header-field"][0])!(fieldNode["default-field"][0])!>
                                 <li id="${fieldNode["@name"]}"><div><@fieldTitle fieldSubNode/></div></li>
                             </#list>
                             </ul></li>
                         </#list>
-                        <#if allColInfoList?size < 10><#list allColInfoList?size..9 as ind>
-                            <li id="column_${ind}"><div>Column ${ind + 1}</div></li>
-                        </#list></#if>
+                        <#list allColInfoList?size..(allColInfoList?size + 2) as ind><#-- always add 3 more columns for flexibility -->
+                            <li id="column_${ind}"><div>${ec.getL10n().localize("Column")} ${ind + 1}</div></li>
+                        </#list>
                     </ul>
                     <form class="form-inline" id="${formId}_SelColsForm" method="post" action="${sri.buildUrl("formSelectColumns").url}">
                         <input type="hidden" name="moquiSessionToken" value="${(ec.getWeb().sessionToken)!}">
@@ -1121,7 +1106,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                         <#list userFindInfoList as userFindInfo>
                             <#assign formListFind = userFindInfo.formListFind>
                             <#assign findParameters = userFindInfo.findParameters>
-                            <#assign doFindUrl = sri.getScreenUrlInstance().cloneUrlInstance().addParameters(findParameters).removeParameter("pageIndex").removeParameter("moquiFormName").removeParameter("moquiSessionToken")>
+                            <#assign doFindUrl = sri.buildUrl(sri.getScreenUrlInstance().path).addParameters(findParameters)>
                             <option value="${formListFind.formListFindId}"<#if formListFind.formListFindId == ec.getContext().formListFindId!> selected="selected"</#if> data-action="${doFindUrl.urlWithParams}">${userFindInfo.description?html}</option>
                         </#list>
                     </select>
@@ -1390,10 +1375,10 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                 highlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-success').addClass('has-error'); },
                 unhighlight: function(element, errorClass, validClass) { $(element).parents('.form-group').removeClass('has-error').addClass('has-success'); }
             });
-            $('#${formId} [data-toggle="tooltip"]').tooltip();
+            $('#${formId} [data-toggle="tooltip"]').tooltip({placement:'auto top'});
         </script>
     </#if>
-    <#if hasSubColumns><script>makeColumnsConsistent('${formId}_table');</script></#if>
+    <#if hasSubColumns><script>moqui.makeColumnsConsistent('${formId}_table');</script></#if>
     <#if sri.doBoundaryComments()><!-- END   form-list[@name=${.node["@name"]}] --></#if>
     <#assign skipForm = false>
 </#macro>
@@ -1537,7 +1522,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     <#elseif .node["@type"]! == "date"><#assign size=10><#assign maxlength=10><#assign defaultFormat="yyyy-MM-dd">
     <#else><#assign size=16><#assign maxlength=23><#assign defaultFormat="yyyy-MM-dd HH:mm">
     </#if>
-    <#assign datepickerFormat><@getBootstrapDateFormat .node["@format"]!defaultFormat/></#assign>
+    <#assign datepickerFormat><@getMomentDateFormat .node["@format"]!defaultFormat/></#assign>
     <#assign curFieldName><@fieldName .node/></#assign>
     <#assign fieldValueFrom = ec.getL10n().format(ec.getContext().get(curFieldName + "_from")!?default(.node["@default-value-from"]!""), defaultFormat)>
     <#assign fieldValueThru = ec.getL10n().format(ec.getContext().get(curFieldName + "_thru")!?default(.node["@default-value-thru"]!""), defaultFormat)>
@@ -1635,16 +1620,18 @@ yyyy	YYYY	    full numeric representation of a year, 4 digits
 Summary of changes needed:
 a => A, d => D, y => Y
 -->
-<#macro getBootstrapDateFormat dateFormat>${dateFormat?replace("a","A")?replace("d","D")?replace("y","Y")}</#macro>
+<#macro getMomentDateFormat dateFormat>${dateFormat?replace("a","A")?replace("d","D")?replace("y","Y")}</#macro>
 
 <#macro "date-time">
+    <#assign dtFieldNode = .node?parent?parent>
     <#assign javaFormat = .node["@format"]!>
+    <#assign validationClasses = formInstance.getFieldValidationClasses(dtFieldNode["@name"])>
     <#if !javaFormat?has_content>
         <#if .node["@type"]! == "time"><#assign javaFormat="HH:mm">
         <#elseif .node["@type"]! == "date"><#assign javaFormat="yyyy-MM-dd">
         <#else><#assign javaFormat="yyyy-MM-dd HH:mm"></#if>
     </#if>
-    <#assign datepickerFormat><@getBootstrapDateFormat javaFormat/></#assign>
+    <#assign datepickerFormat><@getMomentDateFormat javaFormat/></#assign>
     <#assign fieldValue = sri.getFieldValueString(.node?parent?parent, .node["@default-value"]!"", javaFormat)>
 
     <#assign id><@fieldId .node/></#assign>
@@ -1657,7 +1644,7 @@ a => A, d => D, y => Y
 
     <#if .node["@type"]! != "time">
         <div class="input-group date" id="${id}">
-            <input type="text" class="form-control" name="<@fieldName .node/>" value="${fieldValue?html}" size="${size}" maxlength="${maxlength}"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
+            <input type="text" class="form-control<#if validationClasses?contains("required")> required</#if>" name="<@fieldName .node/>" value="${fieldValue?html}" size="${size}" maxlength="${maxlength}"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
             <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
         </div>
         <script>$('#${id}').datetimepicker({toolbarPlacement:'top', showClose:true, showClear:true, showTodayButton:true, defaultDate: '${fieldValue?html}' && moment('${fieldValue?html}','${datepickerFormat}'), format:'${datepickerFormat}', stepping:5, locale:"${ec.getUser().locale.toLanguageTag()}"});</script>
@@ -1689,7 +1676,7 @@ a => A, d => D, y => Y
     <#else>
         <#assign fieldValue = sri.getFieldValueString(.node)>
     </#if>
-    <#t><span id="${dispFieldId}_display" class="${sri.getFieldValueClass(dispFieldNode)}<#if .node["@currency-unit-field"]?has_content> currency</#if><#if dispAlign == "center"> text-center<#elseif dispAlign == "right"> text-right</#if>">
+    <#t><span class="text-inline ${sri.getFieldValueClass(dispFieldNode)}<#if .node["@currency-unit-field"]?has_content> currency</#if><#if dispAlign == "center"> text-center<#elseif dispAlign == "right"> text-right</#if>"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if>>
     <#t><#if fieldValue?has_content><#if .node["@encode"]! == "false">${fieldValue}<#else>${fieldValue?html?replace("\n", "<br>")}</#if><#else>&nbsp;</#if>
     <#t></span>
     <#t><#if dispHidden>
@@ -1720,9 +1707,10 @@ a => A, d => D, y => Y
 </#macro>
 <#macro "display-entity">
     <#assign fieldValue = sri.getFieldEntityValue(.node)!/>
-    <#t><span id="<@fieldId .node/>_display"><#if fieldValue?has_content><#if .node["@encode"]! == "false">${fieldValue!"&nbsp;"}<#else>${(fieldValue!" ")?html?replace("\n", "<br>")}</#if><#else>&nbsp;</#if></span>
+    <#assign dispHidden = (!.node["@also-hidden"]?has_content || .node["@also-hidden"] == "true") && !(skipForm!false)>
+    <#t><span class="text-inline"><#if fieldValue?has_content><#if .node["@encode"]! == "false">${fieldValue!"&nbsp;"}<#else>${(fieldValue!" ")?html?replace("\n", "<br>")}</#if><#else>&nbsp;</#if></span>
     <#-- don't default to fieldValue for the hidden input value, will only be different from the entry value if @text is used, and we don't want that in the hidden value -->
-    <#t><#if !.node["@also-hidden"]?has_content || .node["@also-hidden"] == "true"><input type="hidden" id="<@fieldId .node/>" name="<@fieldName .node/>" value="${sri.getFieldValuePlainString(.node?parent?parent, "")?html}"<#if ownerForm?has_content> form="${ownerForm}"</#if>></#if>
+    <#t><#if dispHidden><input type="hidden" id="<@fieldId .node/>" name="<@fieldName .node/>" value="${sri.getFieldValuePlainString(.node?parent?parent, "")?html}"<#if ownerForm?has_content> form="${ownerForm}"</#if>></#if>
 </#macro>
 
 <#macro "drop-down">
@@ -1730,6 +1718,8 @@ a => A, d => D, y => Y
     <#assign id><@fieldId .node/></#assign>
     <#assign allowMultiple = ec.getResource().expand(.node["@allow-multiple"]!, "") == "true">
     <#assign isDynamicOptions = .node["dynamic-options"]?has_content>
+    <#assign isServerSearch = false>
+    <#if isDynamicOptions><#assign doNode = .node["dynamic-options"][0]><#assign isServerSearch = doNode["@server-search"]! == "true"></#if>
     <#assign name><@fieldName .node/></#assign>
     <#assign options = sri.getFieldOptions(.node)>
     <#assign currentValue = sri.getFieldValuePlainString(ddFieldNode, "")>
@@ -1742,7 +1732,7 @@ a => A, d => D, y => Y
     <#assign optionsHasCurrent = currentDescription?has_content>
     <#if !optionsHasCurrent && .node["@current-description"]?has_content>
         <#assign currentDescription = ec.getResource().expand(.node["@current-description"], "")></#if>
-    <select name="${name}" class="<#if isDynamicOptions> dynamic-options</#if><#if .node["@style"]?has_content> ${ec.getResource().expand(.node["@style"], "")}</#if><#if validationClasses?has_content> ${validationClasses}</#if>" id="${id}"<#if allowMultiple> multiple="multiple"</#if><#if .node["@size"]?has_content> size="${.node["@size"]}"</#if><#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
+    <select name="${name}" class="<#if isDynamicOptions> dynamic-options</#if><#if .node["@style"]?has_content> ${ec.getResource().expand(.node["@style"], "")}</#if><#if validationClasses?has_content> ${validationClasses}</#if><#if isServerSearch> noResetSelect2</#if>"<#if isServerSearch> style="min-width:200px;"</#if> id="${id}"<#if allowMultiple> multiple="multiple"</#if><#if .node["@size"]?has_content> size="${.node["@size"]}"</#if><#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
     <#if !allowMultiple>
         <#-- don't add first-in-list or empty option if allowMultiple (can deselect all to be empty, including empty option allows selection of empty which isn't the point) -->
         <#if currentValue?has_content>
@@ -1758,7 +1748,7 @@ a => A, d => D, y => Y
             <option value="">&nbsp;</option>
         </#if>
     </#if>
-    <#if !isDynamicOptions>
+    <#if options?has_content>
         <#list (options.keySet())! as key>
             <#if allowMultiple && currentValueList?has_content><#assign isSelected = currentValueList?seq_contains(key)>
                 <#else><#assign isSelected = currentValue?has_content && currentValue == key></#if>
@@ -1768,31 +1758,60 @@ a => A, d => D, y => Y
     </select>
     <#-- <span>[${currentValue}]; <#list currentValueList as curValue>[${curValue!''}], </#list></span> -->
     <#if allowMultiple><input type="hidden" id="${id}_op" name="${name}_op" value="in"></#if>
-    <#if .node["@combo-box"]! == "true">
-        <script>$("#${id}").select2({ tags: true, tokenSeparators:[',',' '] });</script>
-    <#elseif .node["@search"]! != "false">
-        <script>$("#${id}").select2({ }); $("#${id}").on("select2:select", function (e) { $("#${id}").select2("open").select2("close"); });</script>
-    </#if>
     <#if isDynamicOptions>
-        <#assign doNode = .node["dynamic-options"][0]>
         <#assign depNodeList = doNode["depends-on"]>
-        <#assign doUrlInfo = sri.makeUrlByType(doNode["@transition"], "transition", .node, "false")>
+        <#assign doUrlInfo = sri.makeUrlByType(doNode["@transition"], "transition", doNode, "false")>
         <#assign doUrlParameterMap = doUrlInfo.getParameterMap()>
         <script>
-            function populate_${id}() {
-                var hasAllParms = true;
-                <#list depNodeList as depNode>if (!$('#<@fieldIdByName depNode["@field"]/>').val()) { hasAllParms = false; } </#list>
-                if (!hasAllParms) { $("#${id}").select2("destroy"); $('#${id}').html(""); $("#${id}").select2({ }); <#-- alert("not has all parms"); --> return; }
+            var ${id}S2Opts = { <#if .node["@combo-box"]! == "true">tags:true, tokenSeparators:[',',' '],</#if>
+                <#if isServerSearch>minimumResultsForSearch:0, width:"100%", minimumInputLength:${doNode["@min-length"]!"1"},
+                ajax:{ url:"${doUrlInfo.url}", type:"POST", dataType:"json", cache:true, delay:${doNode["@delay"]!"300"},
+                    data:function(params) { return { moquiSessionToken: "${(ec.getWeb().sessionToken)!}", term:(params.term || ''), pageIndex:(params.page || 1) - 1
+                        <#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = doUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
+                        <#list doUrlParameterMap?keys as parameterKey><#if doUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${doUrlParameterMap.get(parameterKey)}"</#if></#list>
+                    }},
+                    processResults:function(data, params) {
+                        var isDataArray = moqui.isArray(data);
+                        var list = isDataArray ? data : data.options;
+                        var newData = [];
+                        // funny case where select2 specifies no option.@value if empty so &nbsp; ends up passed with form submit; now filtered on server for \u00a0 only and set to null
+                        <#if allowEmpty! == "true">if (!params.page || params.page <= 1) newData.push({ id:'\u00a0', text:'\u00a0' });</#if>
+                        var labelField = "${doNode["@label-field"]!"label"}"; var valueField = "${doNode["@value-field"]!"value"}";
+                        $.each(list, function(idx, curObj) {
+                            var idVal = curObj[valueField]; if (!idVal) idVal = '\u00a0';
+                            newData.push({ id:idVal, text:curObj[labelField] })
+                        });
+                        var outObj = { results:newData };
+                        if (!isDataArray) {
+                            params.page = params.page || 1; // NOTE: 1 based index, is 0 based on server side
+                            var pageSize = data.pageSize || 20;
+                            outObj.pagination = { more: (data.count ? (params.page * pageSize) < data.count : false) };
+                        }
+                        return outObj;
+                    }
+                }
+                </#if>
+            };
+            $("#${id}").select2(${id}S2Opts);
+            $("#${id}").on("select2:select", function () { $("#${id}").select2("open").select2("close"); });
+            function populate_${id}(params) {
+                <#if doNode["@depends-optional"]! != "true">
+                    var hasAllParms = true;
+                    <#list depNodeList as depNode>if (!$('#<@fieldIdByName depNode["@field"]/>').val()) { hasAllParms = false; } </#list>
+                    if (!hasAllParms) { $("#${id}").select2("destroy"); $('#${id}').html(""); $("#${id}").select2({ }); <#-- alert("not has all parms"); --> return; }
+                </#if>
                 $.ajax({ type:"POST", url:"${doUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                         <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = doUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
                         <#t><#list doUrlParameterMap?keys as parameterKey><#if doUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${doUrlParameterMap.get(parameterKey)}"</#if></#list>
-                        <#t>}, dataType:"json" }).done(
-                    function(list) {
+                        <#t>, term:((params && params.term) || '')}, dataType:"json"}).done(
+                    function(data) {
+                        var list = moqui.isArray(data) ? data : data.options;
                         if (list) {
-                            $("#${id}").select2("destroy");
-                            $('#${id}').html("");<#-- clear out the drop-down -->
+                            var jqEl = $("#${id}");
+                            jqEl.select2("destroy");
+                            jqEl.html("");<#-- clear out the drop-down -->
                             <#if allowEmpty! == "true">
-                            $('#${id}').append('<option value="">&nbsp;</option>');
+                            jqEl.append('<option value="">&nbsp;</option>');
                             </#if>
                             <#if allowMultiple && currentValueList?has_content>var currentValues = [<#list currentValueList as curVal>"${curVal}"<#sep>, </#list>];</#if>
                             $.each(list, function(key, value) {
@@ -1802,21 +1821,27 @@ a => A, d => D, y => Y
                                 <#else>
                                 if (optionValue == "${currentValue}") {
                                 </#if>
-                                    $('#${id}').append("<option selected='selected' value='" + optionValue + "'>" + value["${doNode["@label-field"]!"label"}"] + "</option>");
+                                    jqEl.append("<option selected='selected' value='" + optionValue + "'>" + value["${doNode["@label-field"]!"label"}"] + "</option>");
                                 } else {
-                                    $('#${id}').append("<option value='" + optionValue + "'>" + value["${doNode["@label-field"]!"label"}"] + "</option>");
+                                    jqEl.append("<option value='" + optionValue + "'>" + value["${doNode["@label-field"]!"label"}"] + "</option>");
                                 }
                             });
-                            $("#${id}").select2({ });
+                            $("#${id}").select2(${id}S2Opts);
+                            setTimeout(function() { jqEl.trigger('change'); }, 50);
                         }
                     }
                 );
             }
             <#list depNodeList as depNode>
-            $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${id}(); });
+            $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${id}(<#if currentValue?has_content>{term:"${currentValue}"}</#if>); });
             </#list>
-            populate_${id}();
+            <#if isServerSearch><#if currentValue?has_content>populate_${id}({term:"${currentValue}"});</#if>
+                <#else>populate_${id}();</#if>
+
         </script>
+    <#else>
+        <script>$("#${id}").select2({ <#if .node["@combo-box"]! == "true">tags:true, tokenSeparators:[',',' ']</#if> });
+            $("#${id}").on("select2:select", function () { $("#${id}").select2("open").select2("close"); });</script>
     </#if>
 </#macro>
 
@@ -1890,7 +1915,7 @@ a => A, d => D, y => Y
     </button>
 </#macro>
 
-<#macro "text-area"><textarea class="form-control" name="<@fieldName .node/>" cols="${.node["@cols"]!"60"}" rows="${.node["@rows"]!"3"}"<#if .node["@read-only"]!"false" == "true"> readonly="readonly"</#if><#if .node["@maxlength"]?has_content> maxlength="${.node["@maxlength"]}"</#if> id="<@fieldId .node/>"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>${sri.getFieldValueString(.node)?html}</textarea></#macro>
+<#macro "text-area"><textarea class="form-control" name="<@fieldName .node/>" <#if .node["@cols"]?has_content>cols="${.node["@cols"]}"<#else>style="width:100%;"</#if> rows="${.node["@rows"]!"3"}"<#if .node["@read-only"]!"false" == "true"> readonly="readonly"</#if><#if .node["@maxlength"]?has_content> maxlength="${.node["@maxlength"]}"</#if> id="<@fieldId .node/>"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>${sri.getFieldValueString(.node)?html}</textarea></#macro>
 
 <#macro "text-line">
     <#assign tlFieldNode = .node?parent?parent>
@@ -1911,15 +1936,14 @@ a => A, d => D, y => Y
         <input id="${id}" type="hidden" name="${name}" value="${fieldValue?html}"<#if ownerForm?has_content> form="${ownerForm}"</#if>>
         <#if acShowValue><span id="${id}_value" class="form-autocomplete-value"><#if valueText?has_content>${valueText?html}<#else>&nbsp;</#if></span></#if>
         <#assign depNodeList = .node["depends-on"]>
-        <#-- TODO delay? <#if .node["@ac-delay"]?has_content>delay: ${.node["@ac-delay"]},</#if> -->
         <script>
-            $("#${id}_ac").typeahead({ <#if .node["@ac-min-length"]?has_content>minLength: ${.node["@ac-min-length"]},</#if> highlight: true, hint: false }, { limit: 10,
-                source: function(query, syncResults, asyncResults) { $.ajax({
+            $("#${id}_ac").typeahead({ <#if .node["@ac-min-length"]?has_content>minLength: ${.node["@ac-min-length"]},</#if> highlight: true, hint: false }, { limit: 99,
+                source: moqui.debounce(function(query, syncResults, asyncResults) { $.ajax({
                     url: "${acUrlInfo.url}", type: "POST", dataType: "json", data: { term: query, moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                         <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = acUrlParameterMap.remove(depNodeField)!>, '${depNode["@parameter"]!depNodeField}': $('#<@fieldIdByName depNodeField/>').val()</#list>
                         <#t><#list acUrlParameterMap?keys as parameterKey><#if acUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${acUrlParameterMap.get(parameterKey)}"</#if></#list> },
                     success: function(data) { asyncResults($.map(data, function(item) { return { label: item.label, value: item.value } })); }
-                }); },
+                }); }, <#if .node["@ac-delay"]?has_content>${.node["@ac-delay"]}<#else>300</#if>),
                 display: function(item) { return item.label; }
             });
             $("#${id}_ac").bind('typeahead:select', function(event, item) {
@@ -1946,7 +1970,7 @@ a => A, d => D, y => Y
     <#else>
         <#assign tlAlign = tlFieldNode["@align"]!"left">
         <#t><input id="${id}" type="<#if validationClasses?contains("email")>email<#elseif validationClasses?contains("url")>url<#else>text</#if>"
-        <#t> name="${name}" value="${fieldValue?html}" size="${.node.@size!"30"}"<#if .node.@maxlength?has_content> maxlength="${.node.@maxlength}"</#if>
+        <#t> name="${name}" value="${fieldValue?html}" <#if .node.@size?has_content>size="${.node.@size}"<#else>style="width:100%;"</#if><#if .node.@maxlength?has_content> maxlength="${.node.@maxlength}"</#if>
         <#t><#if ec.getResource().condition(.node.@disabled!"false", "")> disabled="disabled"</#if>
         <#t> class="form-control<#if validationClasses?has_content> ${validationClasses}</#if><#if tlAlign == "center"> text-center<#elseif tlAlign == "right"> text-right</#if>"
         <#t><#if validationClasses?has_content> data-vv-validations="${validationClasses}"</#if><#if validationClasses?contains("required")> required</#if><#if regexpInfo?has_content> pattern="${regexpInfo.regexp}"</#if>
@@ -1957,14 +1981,14 @@ a => A, d => D, y => Y
             <#assign depNodeList = .node["depends-on"]>
             <script>
                 function populate_${id}() {
-                    if ($('#${id}').val()) return;
+                    // if ($('#${id}').val()) return;
                     var hasAllParms = true;
                     <#list depNodeList as depNode>if (!$('#<@fieldIdByName depNode["@field"]/>').val()) { hasAllParms = false; } </#list>
                     if (!hasAllParms) { <#-- alert("not has all parms"); --> return; }
                     $.ajax({ type:"POST", url:"${defUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                             <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = defUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
                             <#t><#list defUrlParameterMap?keys as parameterKey><#if defUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${defUrlParameterMap.get(parameterKey)}"</#if></#list>
-                            <#t>}, dataType:"text" }).done( function(defaultText) { if (defaultText) { $('#${id}').val(defaultText); } } );
+                            <#t>}, dataType:"text", success:function(defaultText) { if (defaultText) { $('#${id}').val(defaultText); } } });
                 }
                 <#list depNodeList as depNode>
                 $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${id}(); });

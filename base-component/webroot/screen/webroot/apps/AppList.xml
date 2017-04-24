@@ -13,7 +13,7 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.0.xsd"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
         require-authentication="true" default-menu-include="false" default-menu-title="App List">
 
     <actions>
@@ -70,6 +70,10 @@ along with this software (see the LICENSE.md file). If not, see
                     </section>
                 </widgets>
             </section-iterate>
+            <render-mode>
+                <text type="html"><![CDATA[<a href="/vapps">Try the new dynamic interface (beta)</a>]]></text>
+                <text type="vuet"><![CDATA[<div>You are using the new dynamic interface (beta)</div><a href="/apps">Switch back to the standard interface</a>]]></text>
+            </render-mode>
         </container>
     </widgets>
 </screen>

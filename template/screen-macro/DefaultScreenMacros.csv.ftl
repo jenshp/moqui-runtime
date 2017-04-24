@@ -64,12 +64,8 @@ along with this software (see the LICENSE.md file). If not, see
 <#-- ============== Render Mode Elements ============== -->
 <#macro "render-mode">
 <#if .node["text"]?has_content>
-    <#list .node["text"] as textNode>
-        <#if textNode["@type"]?has_content && textNode["@type"] == sri.getRenderMode()><#assign textToUse = textNode/></#if>
-    </#list>
-    <#if !textToUse?has_content>
-        <#list .node["text"] as textNode><#if !textNode["@type"]?has_content || textNode["@type"] == "any"><#assign textToUse = textNode/></#if></#list>
-    </#if>
+    <#list .node["text"] as textNode><#if !textNode["@type"]?has_content || textNode["@type"] == "any"><#local textToUse = textNode/></#if></#list>
+    <#list .node["text"] as textNode><#if textNode["@type"]?has_content && textNode["@type"]?split(",")?seq_contains(sri.getRenderMode())><#local textToUse = textNode></#if></#list>
     <#if textToUse??>
         <#if textToUse["@location"]?has_content>
     <#-- NOTE: this still won't encode templates that are rendered to the writer -->
@@ -180,7 +176,15 @@ on the same screen to increase reusability of those screens -->
 </#macro>
 <#macro "row-actions"><#-- do nothing, these are run by the SRI --></#macro>
 
-<#macro fieldTitle fieldSubNode><#assign titleValue><#if fieldSubNode["@title"]?has_content>${fieldSubNode["@title"]}<#else/><#list fieldSubNode?parent["@name"]?split("(?=[A-Z])", "r") as nameWord>${nameWord?cap_first?replace("Id", "ID")}<#if nameWord_has_next> </#if></#list></#if></#assign>${ec.l10n.localize(titleValue)}</#macro>
+<#macro fieldTitle fieldSubNode><#t>
+    <#t><#if (fieldSubNode?node_name == 'header-field')>
+        <#local fieldNode = fieldSubNode?parent>
+        <#local headerFieldNode = fieldNode["header-field"][0]!>
+        <#local defaultFieldNode = fieldNode["default-field"][0]!>
+        <#t><#if headerFieldNode["@title"]?has_content><#local fieldSubNode = headerFieldNode><#elseif defaultFieldNode["@title"]?has_content><#local fieldSubNode = defaultFieldNode></#if>
+    </#if>
+    <#t><#assign titleValue><#if fieldSubNode["@title"]?has_content>${ec.getResource().expand(fieldSubNode["@title"], "")}<#else><#list fieldSubNode?parent["@name"]?split("(?=[A-Z])", "r") as nameWord>${nameWord?cap_first?replace("Id", "ID")}<#if nameWord_has_next> </#if></#list></#if></#assign>${ec.getL10n().localize(titleValue)}
+</#macro>
 
 <#macro "field"><#-- shouldn't be called directly, but just in case --><#recurse/></#macro>
 <#macro "conditional-field"><#-- shouldn't be called directly, but just in case --><#recurse/></#macro>
