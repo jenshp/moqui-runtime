@@ -619,8 +619,12 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
             <#if isHeaderDialog>
                 <#-- Find Parameters Form -->
                 <#assign curUrlInstance = sri.getCurrentScreenUrl()>
-                <form-link name="${headerFormId}" id="${headerFormId}" action="${curUrlInstance.path}">
+                <form-link name="${headerFormId}" id="${headerFormId}" action="${curUrlInstance.path}"><template scope="props">
+                    <#if formListFindId?has_content><input type="hidden" name="formListFindId" value="${formListFindId}"></#if>
                     <fieldset class="form-horizontal">
+                        <div class="form-group"><div class="col-sm-2">&nbsp;</div><div class="col-sm-10">
+                            <button type="button" class="btn btn-primary btn-sm" @click.prevent="props.clearForm">${ec.getL10n().localize("Clear Parameters")}</button></div></div>
+
                         <#-- Always add an orderByField to select one or more columns to order by -->
                         <div class="form-group">
                             <label class="control-label col-sm-2" for="${headerFormId}_orderByField">${ec.getL10n().localize("Order By")}</label>
@@ -669,7 +673,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                             </#if>
                         </#if></#list>
                     </fieldset>
-                </form-link>
+                </template></form-link>
             </#if>
         </container-dialog>
     </#if>
@@ -1164,10 +1168,14 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <#assign afterFormText><@linkFormForm linkNode linkFormId linkText linkUrlInfo/></#assign>
                     <#t>${sri.appendToAfterScreenWriter(afterFormText)}
                     <#t><@linkFormLink linkNode linkFormId linkText linkUrlInfo/>
-                </#if>
-            </#if>
+                <#else>&nbsp;</#if>
+            <#else>&nbsp;</#if>
         <#elseif widgetNode?node_name == "set"><#-- do nothing, handled above -->
-        <#else><#t><#visit widgetNode></#if>
+        <#else>
+            <#assign widgetNodeText><#visit widgetNode></#assign>
+            <#assign widgetNodeText = widgetNodeText?trim>
+            <#t><#if widgetNodeText?has_content>${widgetNodeText}<#else>&nbsp;</#if>
+        </#if>
     </#list>
     <#t>${sri.popContext()}
     <#if !isMultiFinalRow && !isHeaderField><#if skipCell></div><#else></td></#if></#if>
@@ -1234,8 +1242,9 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     <#assign tlId><@fieldId .node/></#assign><#assign curFieldName><@fieldName .node/></#assign>
     <#assign fvOffset = ec.getContext().get(curFieldName + "_poffset")!>
     <#assign fvPeriod = ec.getContext().get(curFieldName + "_period")!?lower_case>
+    <#assign fvDate = ec.getContext().get(curFieldName + "_pdate")!"">
     <#assign allowEmpty = .node["@allow-empty"]!"true">
-    <date-period name="${curFieldName}" id="${tlId}" :allow-empty="${allowEmpty}" offset="${fvOffset}" period="${fvPeriod}"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>/>
+    <date-period name="${curFieldName}" id="${tlId}" :allow-empty="${allowEmpty}" offset="${fvOffset}" period="${fvPeriod}" date="${fvDate}"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>/>
 </#macro>
 
 <#--
@@ -1304,7 +1313,7 @@ a => A, d => D, y => Y
             <#assign fieldValue = sri.getFieldValueString(.node)>
         </#if>
     </#if>
-    <#t><span class="text-inline ${sri.getFieldValueClass(dispFieldNode)}<#if .node["@currency-unit-field"]?has_content> currency</#if><#if dispAlign == "center"> text-center<#elseif dispAlign == "right"> text-right</#if>"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if>>
+    <#t><span class="text-inline ${sri.getFieldValueClass(dispFieldNode)}<#if .node["@currency-unit-field"]?has_content> currency</#if><#if dispAlign == "center"> text-center<#elseif dispAlign == "right"> text-right</#if>"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if .node["@dynamic-transition"]?has_content> id="${dispFieldId}_display"</#if>>
     <#t><#if fieldValue?has_content><#if .node["@encode"]! == "false">${fieldValue}<#else>${fieldValue?html?replace("\n", "<br>")}</#if><#else>&nbsp;</#if>
     <#t></span>
     <#t><#if dispHidden>
@@ -1324,7 +1333,7 @@ a => A, d => D, y => Y
                 $.ajax({ type:"POST", url:"${defUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                     <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = defUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
                     <#t><#list defUrlParameterMap?keys as parameterKey><#if defUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${defUrlParameterMap.get(parameterKey)}"</#if></#list>
-                    <#t>}, dataType:"text" }).done( function(defaultText) { if (defaultText) { $('#${dispFieldId}_display').html(defaultText); <#if dispHidden>$('#${dispFieldId}').val(defaultText);</#if> } } );
+                    <#t>}, dataType:"text" }).done( function(defaultText) {   $('#${dispFieldId}_display').html(defaultText); <#if dispHidden>$('#${dispFieldId}').val(defaultText);</#if>  } );
             }
             <#list depNodeList as depNode>
             $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${dispFieldId}(); });
@@ -1491,7 +1500,7 @@ a => A, d => D, y => Y
                     $.ajax({ type:"POST", url:"${defUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                             <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = defUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
                             <#t><#list defUrlParameterMap?keys as parameterKey><#if defUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${defUrlParameterMap.get(parameterKey)}"</#if></#list>
-                            <#t>}, dataType:"text", success:function(defaultText) { if (defaultText) { $('#${tlId}').val(defaultText); } } });
+                            <#t>}, dataType:"text", success:function(defaultText) {   $('#${tlId}').val(defaultText);  } });
                 }
                 <#list depNodeList as depNode>
                 $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${tlId}(); });

@@ -71,8 +71,8 @@ def fileMap = [
     "typeahead.js/0.11.1/typeahead.jquery.min.js":"",
 
     // NOTE: for production change to min in vapps.xml; currently using dev version for errors/warnings/etc
-    "vue/2.2.6/vue.js":"",
-    "vue/2.2.6/vue.min.js":""
+    "vue/2.3.3/vue.js":"",
+    "vue/2.3.3/vue.min.js":""
 ]
 
 String getTargetPath(String sourcePath, String targetPath) {
@@ -143,6 +143,7 @@ task minifyMoquiLib(type: com.eriwen.gradle.js.tasks.MinifyJsTask) {
 task combineBaseJs(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
     dependsOn downloadFiles
     dependsOn minifyMoquiLib
+    encoding = "UTF-8"
     source = baseJs
     dest = file("${webrootPath}/js/CombinedBase.min.js")
 }
@@ -167,6 +168,7 @@ task minifyWebrootVue(type: com.eriwen.gradle.js.tasks.MinifyJsTask) {
 task combineVuetJs(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
     dependsOn downloadFiles
     dependsOn minifyWebrootVue
+    encoding = "UTF-8"
     source = vuetJs
     dest = file("${webrootPath}/js/CombinedVuet.min.js")
 }

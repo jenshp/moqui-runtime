@@ -864,7 +864,11 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <#assign curUrlInstance = sri.getCurrentScreenUrl()>
                     <form name="${headerFormId}" id="${headerFormId}" method="post" action="${curUrlInstance.url}">
                         <input type="hidden" name="moquiSessionToken" value="${(ec.getWeb().sessionToken)!}">
+                        <#if formListFindId?has_content><input type="hidden" name="formListFindId" value="${formListFindId}"></#if>
                         <fieldset class="form-horizontal">
+                            <div class="form-group"><div class="col-sm-2">&nbsp;</div><div class="col-sm-10">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="${headerFormId}_clearForm()">${ec.getL10n().localize("Clear Parameters")}</button></div></div>
+
                             <#-- Always add an orderByField to select one or more columns to order by -->
                             <div class="form-group">
                                 <label class="control-label col-sm-2" for="${headerFormId}_orderByField">${ec.getL10n().localize("Order By")}</label>
@@ -883,19 +887,25 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                                         </#if></#list>
                                     </select>
                                     <input type="hidden" id="${headerFormId}_orderByField" name="orderByField" value="${orderByField!""}">
-                                    <script>
-                                        $("#${headerFormId}_orderBySelect").selectivity({ positionDropdown: function(dropdownEl, selectEl) { dropdownEl.css("width", "300px"); } })[0].selectivity.filterResults = function(results) {
-                                            // Filter out asc and desc options if anyone selected.
-                                            return results.filter(function(item){return !this._data.some(function(data_item) {return data_item.id.substring(1) === item.id.substring(1);});}, this);
-                                        };
-                                        <#assign orderByJsValue = formListInfo.getOrderByActualJsString(ec.getContext().orderByField)>
-                                        <#if orderByJsValue?has_content>$("#${headerFormId}_orderBySelect").selectivity("value", ${orderByJsValue});</#if>
-                                        $("div#${headerFormId}_orderBySelect").on("change", function(evt) {
-                                            if (evt.value) $("#${headerFormId}_orderByField").val(evt.value.join(","));
-                                        });
-                                    </script>
                                 </div>
                             </div>
+                            <script>
+                                function ${headerFormId}_clearForm() {
+                                    var jqEl = $("#${headerFormId}");
+                                    jqEl.find(':radio, :checkbox').removeAttr('checked');
+                                    jqEl.find('textarea, :text, select').val('').trigger('change');
+                                    return false;
+                                }
+                                $("#${headerFormId}_orderBySelect").selectivity({ positionDropdown: function(dropdownEl, selectEl) { dropdownEl.css("width", "300px"); } })[0].selectivity.filterResults = function(results) {
+                                    // Filter out asc and desc options if anyone selected.
+                                    return results.filter(function(item){return !this._data.some(function(data_item) {return data_item.id.substring(1) === item.id.substring(1);});}, this);
+                                };
+                                    <#assign orderByJsValue = formListInfo.getOrderByActualJsString(ec.getContext().orderByField)>
+                                    <#if orderByJsValue?has_content>$("#${headerFormId}_orderBySelect").selectivity("value", ${orderByJsValue});</#if>
+                                $("div#${headerFormId}_orderBySelect").on("change", function(evt) {
+                                    if (evt.value) $("#${headerFormId}_orderByField").val(evt.value.join(","));
+                                });
+                            </script>
                             <#list formNode["field"] as fieldNode><#if fieldNode["header-field"]?has_content && fieldNode["header-field"][0]?children?has_content>
                                 <#assign headerFieldNode = fieldNode["header-field"][0]>
                                 <#assign defaultFieldNode = (fieldNode["default-field"][0])!>
@@ -1473,10 +1483,14 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                     <#assign afterFormText><@linkFormForm linkNode linkFormId linkText linkUrlInfo/></#assign>
                     <#t>${sri.appendToAfterScreenWriter(afterFormText)}
                     <#t><@linkFormLink linkNode linkFormId linkText linkUrlInfo/>
-                </#if>
-            </#if>
+                <#else>&nbsp;</#if>
+            <#else>&nbsp;</#if>
         <#elseif widgetNode?node_name == "set"><#-- do nothing, handled above -->
-        <#else><#t><#visit widgetNode></#if>
+        <#else>
+            <#assign widgetNodeText><#visit widgetNode></#assign>
+            <#assign widgetNodeText = widgetNodeText?trim>
+            <#t><#if widgetNodeText?has_content>${widgetNodeText}<#else>&nbsp;</#if>
+        </#if>
     </#list>
     <#t>${sri.popContext()}
     <#if !isMultiFinalRow && !isHeaderField><#if skipCell></div><#else></td></#if></#if>
@@ -1560,6 +1574,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     <#assign curFieldName><@fieldName .node/></#assign>
     <#assign fvOffset = ec.getContext().get(curFieldName + "_poffset")!>
     <#assign fvPeriod = ec.getContext().get(curFieldName + "_period")!?lower_case>
+    <#assign fvDate = ec.getContext().get(curFieldName + "_pdate")!"">
     <#assign allowEmpty = .node["@allow-empty"]!"true">
     <div class="date-period">
         <select name="${curFieldName}_poffset" id="${id}_poffset"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
@@ -1568,15 +1583,11 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
             </#if>
             <option value="0"<#if fvOffset == "0"> selected="selected"</#if>>${ec.getL10n().localize("This")}</option>
             <option value="-1"<#if fvOffset == "-1"> selected="selected"</#if>>${ec.getL10n().localize("Last")}</option>
-            <option value="-2"<#if fvOffset == "-2"> selected="selected"</#if>>-2</option>
-            <option value="-3"<#if fvOffset == "-3"> selected="selected"</#if>>-3</option>
-            <option value="-4"<#if fvOffset == "-4"> selected="selected"</#if>>-4</option>
-            <option value="-5"<#if fvOffset == "-5"> selected="selected"</#if>>-5</option>
             <option value="1"<#if fvOffset == "1"> selected="selected"</#if>>${ec.getL10n().localize("Next")}</option>
+            <option value="-2"<#if fvOffset == "-2"> selected="selected"</#if>>-2</option>
             <option value="2"<#if fvOffset == "2"> selected="selected"</#if>>+2</option>
+            <option value="-3"<#if fvOffset == "-3"> selected="selected"</#if>>-3</option>
             <option value="3"<#if fvOffset == "3"> selected="selected"</#if>>+3</option>
-            <option value="4"<#if fvOffset == "4"> selected="selected"</#if>>+4</option>
-            <option value="5"<#if fvOffset == "5"> selected="selected"</#if>>+5</option>
         </select>
         <select name="${curFieldName}_period" id="${id}_period"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
             <#if (allowEmpty! != "false")>
@@ -1588,8 +1599,17 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
             <option value="week" <#if fvPeriod == "week"> selected="selected"</#if>>${ec.getL10n().localize("Week")}</option>
             <option value="month" <#if fvPeriod == "month"> selected="selected"</#if>>${ec.getL10n().localize("Month")}</option>
             <option value="year" <#if fvPeriod == "year"> selected="selected"</#if>>${ec.getL10n().localize("Year")}</option>
+            <option value="7r" <#if fvPeriod == "7r"> selected="selected"</#if>>+/-7d</option>
+            <option value="30r" <#if fvPeriod == "30r"> selected="selected"</#if>>+/-30d</option>
         </select>
-        <script>$("#${id}_poffset").select2({ }); $("#${id}_period").select2({ });</script>
+        <div class="input-group date" id="${id}_pdate">
+            <input type="text" class="form-control" name="${curFieldName}_pdate" value="${fvDate?html}" size="10" maxlength="10"<#if ownerForm?has_content> form="${ownerForm}"</#if>>
+            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+        </div>
+        <script>
+            $("#${id}_poffset").select2({ }); $("#${id}_period").select2({ });
+            $('#${id}_pdate').datetimepicker({toolbarPlacement:'top', showClose:true, showClear:true, showTodayButton:true, defaultDate: '${fvDate?html}' && moment('${fvDate?html}','YYYY-MM-DD'), format:'YYYY-MM-DD', locale:"${ec.getUser().locale.toLanguageTag()}"});
+        </script>
     </div>
 </#macro>
 
@@ -1676,7 +1696,7 @@ a => A, d => D, y => Y
     <#else>
         <#assign fieldValue = sri.getFieldValueString(.node)>
     </#if>
-    <#t><span class="text-inline ${sri.getFieldValueClass(dispFieldNode)}<#if .node["@currency-unit-field"]?has_content> currency</#if><#if dispAlign == "center"> text-center<#elseif dispAlign == "right"> text-right</#if>"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if>>
+    <#t><span class="text-inline ${sri.getFieldValueClass(dispFieldNode)}<#if .node["@currency-unit-field"]?has_content> currency</#if><#if dispAlign == "center"> text-center<#elseif dispAlign == "right"> text-right</#if>"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if .node["@dynamic-transition"]?has_content> id="${dispFieldId}_display"</#if>>
     <#t><#if fieldValue?has_content><#if .node["@encode"]! == "false">${fieldValue}<#else>${fieldValue?html?replace("\n", "<br>")}</#if><#else>&nbsp;</#if>
     <#t></span>
     <#t><#if dispHidden>
@@ -1696,7 +1716,7 @@ a => A, d => D, y => Y
                 $.ajax({ type:"POST", url:"${defUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                     <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = defUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
                     <#t><#list defUrlParameterMap?keys as parameterKey><#if defUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${defUrlParameterMap.get(parameterKey)}"</#if></#list>
-                    <#t>}, dataType:"text" }).done( function(defaultText) { if (defaultText) { $('#${dispFieldId}_display').html(defaultText); <#if dispHidden>$('#${dispFieldId}').val(defaultText);</#if> } } );
+                    <#t>}, dataType:"text" }).done( function(defaultText) { $('#${dispFieldId}_display').html(defaultText); <#if dispHidden>$('#${dispFieldId}').val(defaultText);</#if>  } );
             }
             <#list depNodeList as depNode>
             $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${dispFieldId}(); });
@@ -1732,7 +1752,7 @@ a => A, d => D, y => Y
     <#assign optionsHasCurrent = currentDescription?has_content>
     <#if !optionsHasCurrent && .node["@current-description"]?has_content>
         <#assign currentDescription = ec.getResource().expand(.node["@current-description"], "")></#if>
-    <select name="${name}" class="<#if isDynamicOptions> dynamic-options</#if><#if .node["@style"]?has_content> ${ec.getResource().expand(.node["@style"], "")}</#if><#if validationClasses?has_content> ${validationClasses}</#if><#if isServerSearch> noResetSelect2</#if>"<#if isServerSearch> style="min-width:200px;"</#if> id="${id}"<#if allowMultiple> multiple="multiple"</#if><#if .node["@size"]?has_content> size="${.node["@size"]}"</#if><#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
+    <select name="${name}" class="<#if isDynamicOptions> dynamic-options</#if><#if .node["@style"]?has_content> ${ec.getResource().expand(.node["@style"], "")}</#if><#if validationClasses?has_content> ${validationClasses}</#if><#if isServerSearch || allowMultiple> noResetSelect2</#if>"<#if isServerSearch> style="min-width:200px;"</#if> id="${id}"<#if allowMultiple> multiple="multiple"</#if><#if .node["@size"]?has_content> size="${.node["@size"]}"</#if><#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>>
     <#if !allowMultiple>
         <#-- don't add first-in-list or empty option if allowMultiple (can deselect all to be empty, including empty option allows selection of empty which isn't the point) -->
         <#if currentValue?has_content>
@@ -1764,6 +1784,7 @@ a => A, d => D, y => Y
         <#assign doUrlParameterMap = doUrlInfo.getParameterMap()>
         <script>
             var ${id}S2Opts = { <#if .node["@combo-box"]! == "true">tags:true, tokenSeparators:[',',' '],</#if>
+                <#if allowMultiple>closeOnSelect:false,</#if>
                 <#if isServerSearch>minimumResultsForSearch:0, width:"100%", minimumInputLength:${doNode["@min-length"]!"1"},
                 ajax:{ url:"${doUrlInfo.url}", type:"POST", dataType:"json", cache:true, delay:${doNode["@delay"]!"300"},
                     data:function(params) { return { moquiSessionToken: "${(ec.getWeb().sessionToken)!}", term:(params.term || ''), pageIndex:(params.page || 1) - 1
@@ -1793,7 +1814,7 @@ a => A, d => D, y => Y
                 </#if>
             };
             $("#${id}").select2(${id}S2Opts);
-            $("#${id}").on("select2:select", function () { $("#${id}").select2("open").select2("close"); });
+            <#-- $("#${id}").on("select2:select", function () { $("#${id}").select2("open").select2("close"); }); -->
             function populate_${id}(params) {
                 <#if doNode["@depends-optional"]! != "true">
                     var hasAllParms = true;
@@ -1819,7 +1840,7 @@ a => A, d => D, y => Y
                                 <#if allowMultiple && currentValueList?has_content>
                                 if (currentValues.indexOf(optionValue) >= 0) {
                                 <#else>
-                                if (optionValue == "${currentValue}") {
+                                if (optionValue === "${currentValue}") {
                                 </#if>
                                     jqEl.append("<option selected='selected' value='" + optionValue + "'>" + value["${doNode["@label-field"]!"label"}"] + "</option>");
                                 } else {
@@ -1840,8 +1861,8 @@ a => A, d => D, y => Y
 
         </script>
     <#else>
-        <script>$("#${id}").select2({ <#if .node["@combo-box"]! == "true">tags:true, tokenSeparators:[',',' ']</#if> });
-            $("#${id}").on("select2:select", function () { $("#${id}").select2("open").select2("close"); });</script>
+        <script>$("#${id}").select2({ <#if allowMultiple>closeOnSelect:false, width:"100%", </#if><#if .node["@combo-box"]! == "true">tags:true, tokenSeparators:[',',' ']</#if> });</script>
+        <#-- is this really needed any more? $("#${id}").on("select2:select", function () { $("#${id}").select2("open").select2("close"); }); -->
     </#if>
 </#macro>
 
@@ -1942,7 +1963,7 @@ a => A, d => D, y => Y
                     url: "${acUrlInfo.url}", type: "POST", dataType: "json", data: { term: query, moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                         <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = acUrlParameterMap.remove(depNodeField)!>, '${depNode["@parameter"]!depNodeField}': $('#<@fieldIdByName depNodeField/>').val()</#list>
                         <#t><#list acUrlParameterMap?keys as parameterKey><#if acUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${acUrlParameterMap.get(parameterKey)}"</#if></#list> },
-                    success: function(data) { asyncResults($.map(data, function(item) { return { label: item.label, value: item.value } })); }
+                    success: function(data) { var list = moqui.isArray(data) ? data : data.options; asyncResults($.map(list, function(item) { return { label: item.label, value: item.value } })); }
                 }); }, <#if .node["@ac-delay"]?has_content>${.node["@ac-delay"]}<#else>300</#if>),
                 display: function(item) { return item.label; }
             });
@@ -1959,9 +1980,10 @@ a => A, d => D, y => Y
             if ($("#${id}").val()) {
                 $.ajax({ url: "${acUrlInfo.url}", type: "POST", dataType: "json", data: { term: $("#${id}").val(), moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#list acUrlParameterMap?keys as parameterKey><#if acUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${acUrlParameterMap.get(parameterKey)}"</#if></#list> },
                     success: function(data) {
+                        var list = moqui.isArray(data) ? data : data.options;
                         var curValue = $("#${id}").val();
-                        for (var i = 0; i < data.length; i++) { if (data[i].value == curValue) { $("#${id}_ac").val(data[i].label); <#if acShowValue>$("#${id}_value").html(data[i].label);</#if> break; } }
-                        <#-- don't do this by default if we haven't found a valid one: if (data && data[0].label) { $("#${id}_ac").val(data[0].label); <#if acShowValue>$("#${id}_value").html(data[0].label);</#if> } -->
+                        for (var i = 0; i < list.length; i++) { if (list[i].value == curValue) { $("#${id}_ac").val(list[i].label); <#if acShowValue>$("#${id}_value").html(list[i].label);</#if> break; } }
+                        <#-- don't do this by default if we haven't found a valid one: if (list && list[0].label) { $("#${id}_ac").val(list[0].label); <#if acShowValue>$("#${id}_value").html(list[0].label);</#if> } -->
                     }
                 });
             }
@@ -1988,7 +2010,7 @@ a => A, d => D, y => Y
                     $.ajax({ type:"POST", url:"${defUrlInfo.url}", data:{ moquiSessionToken: "${(ec.getWeb().sessionToken)!}"<#rt>
                             <#t><#list depNodeList as depNode><#local depNodeField = depNode["@field"]><#local _void = defUrlParameterMap.remove(depNodeField)!>, "${depNode["@parameter"]!depNodeField}": $("#<@fieldIdByName depNodeField/>").val()</#list>
                             <#t><#list defUrlParameterMap?keys as parameterKey><#if defUrlParameterMap.get(parameterKey)?has_content>, "${parameterKey}":"${defUrlParameterMap.get(parameterKey)}"</#if></#list>
-                            <#t>}, dataType:"text", success:function(defaultText) { if (defaultText) { $('#${id}').val(defaultText); } } });
+                            <#t>}, dataType:"text", success:function(defaultText) {   $('#${id}').val(defaultText);  } });
                 }
                 <#list depNodeList as depNode>
                 $("#<@fieldIdByName depNode["@field"]/>").on('change', function() { populate_${id}(); });

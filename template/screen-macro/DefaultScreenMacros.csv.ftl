@@ -69,7 +69,7 @@ along with this software (see the LICENSE.md file). If not, see
     <#if textToUse??>
         <#if textToUse["@location"]?has_content>
     <#-- NOTE: this still won't encode templates that are rendered to the writer -->
-    <#if .node["@encode"] == "true">${sri.renderText(textToUse["@location"], textToUse["@template"]!)?html}<#else/>${sri.renderText(textToUse["@location"], textToUse["@template"]!)}</#if>
+    <#if .node["@encode"]! == "true">${sri.renderText(textToUse["@location"], textToUse["@template"]!)?html}<#else>${sri.renderText(textToUse["@location"], textToUse["@template"]!)}</#if>
         </#if>
         <#assign inlineTemplateSource = textToUse?string/>
         <#if inlineTemplateSource?has_content>
@@ -201,7 +201,7 @@ on the same screen to increase reusability of those screens -->
 
 <#macro "date-find"></#macro>
 <#macro "date-time">
-    <#assign fieldValue = sri.getFieldValue(.node?parent?parent, .node["@default-value"]!"")>
+    <#assign fieldValue = sri.getFieldValue(.node?parent?parent, .node["@default-value"]!"")!>
     <#if .node["@format"]?has_content><#assign fieldValue = ec.l10n.format(fieldValue, .node["@format"])></#if>
     <#if .node["@type"]! == "time"><#assign size=9/><#assign maxlength=12/><#elseif .node["@type"]! == "date"><#assign size=10/><#assign maxlength=10/><#else><#assign size=23/><#assign maxlength=23/></#if>
     <#t><@csvValue fieldValue/>

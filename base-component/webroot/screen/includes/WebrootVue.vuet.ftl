@@ -58,7 +58,7 @@ along with this software (see the LICENSE.md file). If not, see
                     </template>
                 </li>
             </ul>
-            <template v-if="navMenuList.length > 0"><m-link class="navbar-text" :href="navMenuList[navMenuList.length - 1].pathWithParams">{{navMenuList[navMenuList.length - 1].title}}</m-link></template>
+            <template v-if="navMenuList.length > 0"><m-link class="navbar-text" :href="getNavHref(navMenuList.length - 1)">{{navMenuList[navMenuList.length - 1].title}}</m-link></template>
             <#-- logout button -->
             <a href="${sri.buildUrl("/Login/logout").url}" data-toggle="tooltip" data-original-title="Logout ${(ec.user.userAccount.userFullName)!''}" data-placement="bottom" class="btn btn-danger btn-sm navbar-btn navbar-right"><i class="glyphicon glyphicon-off"></i></a>
             <#-- screen history menu -->
@@ -80,9 +80,9 @@ along with this software (see the LICENSE.md file). If not, see
             <div id="notify-history-menu" class="nav navbar-right dropdown">
                 <a id="notify-history-menu-link" href="#" class="dropdown-toggle btn btn-default btn-sm navbar-btn" data-toggle="dropdown" title="Notifications">
                     <i class="glyphicon glyphicon-exclamation-sign"></i></a>
-                <ul class="dropdown-menu">
+                <ul class="dropdown-menu" @click.prevent="stopProp">
                     <li v-for="histItem in notifyHistoryList">
-                        <div :class="'alert alert-' + histItem.type" role="alert"><strong>{{histItem.time}}</strong> {{histItem.message}}</div>
+                        <div :class="'alert alert-' + histItem.type" @click.prevent="stopProp" role="alert"><strong>{{histItem.time}}</strong> {{histItem.message}}</div>
                     </li>
                 </ul>
             </div>
