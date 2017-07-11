@@ -165,13 +165,15 @@ moqui.handleAjaxError = function(jqXHR, textStatus, errorThrown) {
     // console.error('respObj: ' + JSON.stringify(respObj));
     var notified = false;
     if (respObj && moqui.isPlainObject(respObj)) { notified = moqui.notifyMessages(respObj.messages, respObj.errors); }
+    else if (resp && moqui.isString(resp) && resp.length) { notified = moqui.notifyMessages(resp); }
 
     // reload on 401 (Unauthorized) so server can remember current URL and redirect to login screen
-    if (jqXHR.status === 401) { if (moqui.webrootVue) { window.location.href = moqui.webrootVue.currentLinkUrl; } else { window.location.reload(true); } }
-    else if (jqXHR.status === 0) { $.notify({ message:'Could not connect to server' }, $.extend({}, moqui.notifyOpts, {delay:10000, type:'danger'}));
-        moqui.webrootVue.addNotify('Could not connect to server', 'danger');}
-    else if (!notified) { $.notify({ message:'Error: ' + errorThrown + ' (' + textStatus + ')' }, $.extend({}, moqui.notifyOpts, {delay:10000, type:'danger'}));
-        moqui.webrootVue.addNotify('Error: ' + errorThrown + ' (' + textStatus + ')', 'danger'); }
+    if (jqXHR.status === 401) { if (moqui.webrootVue) { window.location.href = moqui.webrootVue.currentLinkUrl; } else { window.location.reload(true); }
+    } else if (jqXHR.status === 0) { if (errorThrown.indexOf('abort') < 0) { var msg = 'Could not connect to server';
+        $.notify({ message:msg }, $.extend({}, moqui.notifyOpts, {delay:10000, type:'danger'})); moqui.webrootVue.addNotify(msg, 'danger'); }
+    } else if (!notified) { var errMsg = 'Error: ' + errorThrown + ' (' + textStatus + ')';
+        $.notify({ message:errMsg }, $.extend({}, moqui.notifyOpts, {delay:10000, type:'danger'})); moqui.webrootVue.addNotify(errMsg, 'danger');
+    }
 };
 
 /* ========== component loading methods ========== */
@@ -221,7 +223,7 @@ moqui.loadComponent = function(urlInfo, callback, divId) {
                     callback(jsCompObj);
                 } else {
                     var htmlUrl = (path.slice(-3) === '.js' ? path.slice(0, -3) : path) + '.vuet';
-                    $.ajax({ type:"GET", url:htmlUrl, error:moqui.handleAjaxError, success: function (htmlText) {
+                    $.ajax({ type:"GET", url:htmlUrl, error:moqui.handleLoadError, success: function (htmlText) {
                         jsCompObj.template = htmlText;
                         if (isServerStatic) { moqui.componentCache.put(path, jsCompObj); }
                         callback(jsCompObj);
@@ -282,12 +284,11 @@ Vue.component('m-stylesheet', {
     created: function() { moqui.loadStylesheet(this.href, this.rel, this.type); }
 });
 /* ========== layout components ========== */
-Vue.component('container-box', { template:
-    '<div class="panel panel-default">' +
-        '<div class="panel-heading">' +
-            '<slot name="header"></slot>' +
-            '<div class="panel-toolbar"><slot name="toolbar"></slot></div>' +
-        '</div>' +
+Vue.component('container-box', {
+    props: { type:{type:String,'default':'default'} },
+    template:
+    '<div :class="\'panel panel-\' + type"><div class="panel-heading"><slot name="header"></slot>' +
+            '<div class="panel-toolbar"><slot name="toolbar"></slot></div></div>' +
         '<slot></slot>' +
     '</div>'
 });
@@ -296,7 +297,7 @@ Vue.component('container-dialog', {
     props: { id:{type:String,required:true}, title:String, width:{type:String,'default':'760'}, openDialog:{type:Boolean,'default':false} },
     data: function() { return { isHidden:true, dialogStyle:{width:this.width + 'px'}}},
     template:
-    '<div :id="id" class="modal dynamic-dialog" aria-hidden="true" style="display: none;" tabindex="-1">' +
+    '<div :id="id" class="modal dynamic-dialog" aria-hidden="true" style="display:none;" tabindex="-1">' +
         '<div class="modal-dialog" :style="dialogStyle"><div class="modal-content">' +
             '<div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>' +
                 '<h4 class="modal-title">{{title}}</h4></div>' +
@@ -704,7 +705,7 @@ Vue.component('date-time', {
         size:String, format:String, tooltip:String, form:String },
     template:
     '<input v-if="type==\'time\'" type="text" class="form-control" :pattern="timePattern" :name="name" :value="value" :size="sizeVal" :data-toggle="{tooltip:(tooltip&&tooltip.length>0)}" :title="tooltip" :form="form">' +
-    '<div v-else class="input-group date" id="${tlId}">' +
+    '<div v-else class="input-group date" :id="id">' +
         '<input type="text" class="form-control" :name="name" :value="value" :size="sizeVal" :data-toggle="{tooltip:(tooltip&&tooltip.length>0)}" :title="tooltip" :form="form">' +
         '<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>' +
     '</div>',
@@ -727,10 +728,10 @@ moqui.datePeriods = [{id:'day',text:'Day'},{id:'7d',text:'7 Days'},{id:'30d',tex
     {id:'month',text:'Month'},{id:'year',text:'Year'},{id:'7r',text:'+/-7d'},{id:'30r',text:'+/-30d'}];
 moqui.emptyOpt = {id:'',text:'\u00a0'};
 Vue.component('date-period', {
-    props: { name:{type:String,required:true}, allowEmpty:Boolean, offset:String, period:String, date:String, form:String },
-    template: '<div class="date-period"><select ref="poffset" :name="name+\'_poffset\'" :form="form"></select> ' +
+    props: { name:{type:String,required:true}, id:String, allowEmpty:Boolean, offset:String, period:String, date:String, form:String },
+    template: '<div class="date-period" :id="id"><select ref="poffset" :name="name+\'_poffset\'" :form="form"></select> ' +
         '<select ref="period" :name="name+\'_period\'" :form="form"></select> ' +
-        '<date-time :name="name+\'_pdate\'" :form="form" type="date" :value="date"/></div>',
+        '<date-time :name="name+\'_pdate\'" :id="id+\'_pdate\'" :form="form" type="date" :value="date"/></div>',
     mounted: function() {
         var pofsEl = $(this.$refs.poffset); var perEl = $(this.$refs.period);
         var offsets = moqui.dateOffsets.slice(); var periods = moqui.datePeriods.slice();
@@ -1011,7 +1012,7 @@ moqui.webrootVue = new Vue({
             var nm = nowDate.getMinutes(); if (nm < 10) nm = '0' + nm;
             var ns = nowDate.getSeconds(); if (ns < 10) ns = '0' + ns;
             histList.unshift({message:message, type:type, time:(nh + ':' + nm + ':' + ns)});
-            while (histList.length > 15) { histList.pop(); }
+            while (histList.length > 25) { histList.pop(); }
             this.notifyHistoryList = histList;
         },
         switchDarkLight: function() {
@@ -1040,7 +1041,8 @@ moqui.webrootVue = new Vue({
     },
     watch: {
         navMenuList: function(newList) { if (newList.length > 0) {
-            var cur = newList[newList.length - 1]; var par = newList.length > 1 ? newList[newList.length - 2] : null;
+            var cur = newList[newList.length - 1];
+            var par = newList.length > 1 ? newList[newList.length - 2] : null;
             // if there is an extraPathList set it now
             if (cur.extraPathList) this.extraPathList = cur.extraPathList;
             // make sure full currentPathList and activeSubscreens is populated (necessary for minimal path urls)
@@ -1056,7 +1058,8 @@ moqui.webrootVue = new Vue({
             if (questIdx > 0) {
                 var parmList = curUrl.substring(questIdx+1).split("&");
                 curUrl = curUrl.substring(0, questIdx);
-                var dpCount = 0; var titleParms = "";
+                var dpCount = 0;
+                var titleParms = "";
                 for (var pi=0; pi<parmList.length; pi++) {
                     var parm = parmList[pi]; if (parm.indexOf("pageIndex=") === 0) continue;
                     if (curUrl.indexOf("?") === -1) { curUrl += "?"; } else { curUrl += "&"; }
@@ -1067,10 +1070,13 @@ moqui.webrootVue = new Vue({
                         var key = parm.substring(0, eqIdx);
                         if (key.indexOf("_op") > 0 || key.indexOf("_not") > 0 || key.indexOf("_ic") > 0 || key === "moquiSessionToken") continue;
                         if (titleParms.length > 0) titleParms += ", ";
-                        titleParms += parm.substring(eqIdx + 1);
+                        titleParms += decodeURIComponent(parm.substring(eqIdx + 1));
                     }
                 }
-                if (titleParms.length > 0) newTitle = newTitle + " (" + titleParms + ")";
+                if (titleParms.length > 0) {
+                    if (titleParms.length > 70) titleParms = titleParms.substring(0, 70) + "...";
+                    newTitle = newTitle + " (" + titleParms + ")";
+                }
             }
             var navHistoryList = this.navHistoryList;
             for (var hi=0; hi<navHistoryList.length;) {
@@ -1124,8 +1130,12 @@ moqui.webrootVue = new Vue({
                 this.activeContainers = {};
                 // update menu, which triggers update of screen/subscreen components
                 var vm = this;
-                $.ajax({ type:"GET", url:"/menuData" + screenUrl, dataType:"json", error:moqui.handleAjaxError, success: function(outerList) {
-                    if (outerList) { vm.navMenuList = outerList; /* console.info('navMenuList ' + JSON.stringify(outerList)); */ } }});
+                $.ajax({ type:"GET", url:"/menuData" + screenUrl, dataType:"text", error:moqui.handleAjaxError, success: function(outerListText) {
+                    var outerList = null;
+                    // console.log("menu response " + outerListText);
+                    try { outerList = JSON.parse(outerListText); } catch (e) { console.info("Error parson menu list JSON: " + e); }
+                    if (outerList && moqui.isArray(outerList)) { vm.navMenuList = outerList; /* console.info('navMenuList ' + JSON.stringify(outerList)); */ }
+                }});
             }
         },
         currentLinkUrl: function() { var srch = this.currentSearch; return this.currentLinkPath + (srch.length > 0 ? '?' + srch : ''); },
