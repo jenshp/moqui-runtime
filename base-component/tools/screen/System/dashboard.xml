@@ -26,11 +26,12 @@ along with this software (see the LICENSE.md file). If not, see
     </actions>
     <widgets>
         <container-row><row-col md="6">
-            <container-box><box-header><label text="Usage" type="h5"/></box-header><box-body>
-                <link url="../ArtifactHitSummary" text="Artifact Hit Summary"/>
-                <link url="../ArtifactHitBins" text="Artifact Hit Bins"/>
-                <link url="../AuditLog" text="Audit Log"/>
-                <link url="../Visit" text="Visits"/>
+            <container-box><box-header><label text="Server Admin" type="h5"/></box-header><box-body>
+                <link url="../Cache" text="Cache Stats and Mgmt"/>
+                <link url="../Instance" text="Instance Mgmt"/>
+                <link url="../Print/Printer" text="Printers"/>
+                <link url="../Print/PrintJob" text="Print Jobs"/>
+                <link url="../ServiceJob" text="Service Jobs"/>
             </box-body></container-box>
             <container-box><box-header><label text="Security" type="h5"/></box-header><box-body>
                 <link url="../Security/UserAccount" text="Users"/>
@@ -38,16 +39,22 @@ along with this software (see the LICENSE.md file). If not, see
                 <link url="../Security/ArtifactGroup" text="Artifact Groups"/>
                 <link url="../Security/ActiveUsers" text="Active Users"/>
             </box-body></container-box>
+            <container-box><box-header><label text="Usage" type="h5"/></box-header><box-body>
+                <link url="../ArtifactHitSummary" text="Artifact Hit Summary"/>
+                <link url="../ArtifactHitBins" text="Artifact Hit Bins"/>
+                <link url="../AuditLog" text="Audit Log"/>
+                <link url="../Visit" text="Visits"/>
+                <link url="../LogViewer" text="Log Viewer"/>
+            </box-body></container-box>
         </row-col><row-col md="6">
-            <container-box><box-header><label text="Server Admin" type="h5"/></box-header><box-body>
-                <link url="../Cache" text="Cache Stats and Mgmt"/>
-                <link url="../ServiceJob" text="Service Jobs"/>
-                <link url="../Print" text="Print Servers and Jobs"/>
-                <link url="../Instance" text="Instance Mgmt"/>
+            <container-box><box-header><label text="Data Documents and Feeds" type="h5"/></box-header><box-body>
+                <link url="../DataDocument/Search" text="Search"/>
+                <link url="../DataDocument/Export" text="Export"/>
+                <link url="../DataDocument/Index" text="Feed Index"/>
+                <link url="../DataDocument/Edit" text="Edit and Report Builder"/>
             </box-body></container-box>
             <container-box><box-header><label text="Data Admin" type="h5"/></box-header><box-body>
                 <link url="../Localization" text="Localization"/>
-                <link url="../DataDocument" text="Data Documents"/>
                 <link url="../Resource" text="Resource Finder"/>
             </box-body></container-box>
             <container-box><box-header><label text="Integration Admin" type="h5"/></box-header><box-body>
@@ -58,6 +65,13 @@ along with this software (see the LICENSE.md file). If not, see
         <container-box><box-header><label text="System Information" type="h5"/></box-header><box-toolbar>
             <link url="threadList" text="Thread List"/>
         </box-toolbar><box-body>
+            <container-row><row-col sm="4">
+                <label text="Uptime: ${ec.l10n.format(smap.JavaRuntime.UptimeHours, '#,##0.00')} hours" type="strong"/>
+            </row-col><row-col sm="4">
+                <label text="Locale: ${Locale.getDefault()}" type="strong"/>
+            </row-col><row-col sm="4">
+                <label text="Time Zone: ${TimeZone.getDefault().getID()} GMT${ec.l10n.format(TimeZone.getDefault().getRawOffset()/(1000*60*60), '+00.0;-00.0')} DST ${TimeZone.getDefault().getDSTSavings()/(1000*60*60)}" type="strong"/>
+            </row-col></container-row>
             <container-row><row-col md="4">
                 <container-row><row-col xs="5"><label text="Heap Memory" type="strong"/></row-col>
                     <row-col xs="7"><label text="Heap: ${ec.l10n.format(heapPercent, '00.0')}%" style="${heapPercent &lt; 70 ? 'text-success' : (heapPercent &lt; 90 ? 'text-warn' : 'text-danger' )}"/></row-col></container-row>
