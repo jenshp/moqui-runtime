@@ -285,12 +285,15 @@ Vue.component('m-stylesheet', {
 });
 /* ========== layout components ========== */
 Vue.component('container-box', {
-    props: { type:{type:String,'default':'default'} },
+    props: { type:{type:String,'default':'default'}, title:String, initialOpen:{type:Boolean,'default':true} },
+    data: function() { return { isBodyOpen:this.initialOpen }},
     template:
-    '<div :class="\'panel panel-\' + type"><div class="panel-heading"><slot name="header"></slot>' +
+    '<div :class="\'panel panel-\' + type"><div class="panel-heading" @click.self="toggleBody">' +
+            '<h5 v-if="title && title.length" @click="toggleBody">{{title}}</h5><slot name="header"></slot>' +
             '<div class="panel-toolbar"><slot name="toolbar"></slot></div></div>' +
-        '<slot></slot>' +
-    '</div>'
+        '<div class="panel-collapse collapse" :class="{in:isBodyOpen}"><slot></slot></div>' +
+    '</div>',
+    methods: { toggleBody: function() { this.isBodyOpen = !this.isBodyOpen; } }
 });
 Vue.component('box-body', { template: '<div class="panel-body"><slot></slot></div>' });
 Vue.component('container-dialog', {
@@ -720,8 +723,12 @@ Vue.component('date-time', {
     },
     mounted: function() {
         var value = this.value;
-        if (this.type !== "time") { $(this.$el).datetimepicker({toolbarPlacement:'top', showClose:true, showClear:true, showTodayButton:true, useStrict:true,
-            defaultDate:(value && value.length ? moment(value,this.formatVal) : null), format:this.formatVal, extraFormats:this.extraFormatsVal, stepping:5, locale:this.$root.locale}); }
+        var format = this.formatVal;
+        var jqEl = $(this.$el);
+        if (this.type !== "time") { jqEl.datetimepicker({toolbarPlacement:'top', showClose:true, showClear:true, showTodayButton:true, useStrict:true,
+            defaultDate:(value && value.length ? moment(value,this.formatVal) : null), format:format, extraFormats:this.extraFormatsVal, stepping:5, locale:this.$root.locale}); }
+        if (format === "YYYY-MM-DD") { jqEl.find('input').inputmask("yyyy-mm-dd", { clearIncomplete:false, clearMaskOnLostFocus:true, showMaskOnFocus:true, showMaskOnHover:false, removeMaskOnSubmit:true }); }
+        if (format === "YYYY-MM-DD HH:mm") { jqEl.find('input').inputmask("yyyy-mm-dd hh:mm", { clearIncomplete:false, clearMaskOnLostFocus:true, showMaskOnFocus:true, showMaskOnHover:false, removeMaskOnSubmit:true }); }
     }
 });
 moqui.dateOffsets = [{id:'0',text:'This'},{id:'-1',text:'Last'},{id:'1',text:'Next'},
@@ -768,7 +775,9 @@ Vue.component('drop-down', {
             var reqData = { moquiSessionToken: this.$root.moquiSessionToken };
             for (var parmName in parmMap) { if (parmMap.hasOwnProperty(parmName)) reqData[parmName] = parmMap[parmName]; }
             for (var doParm in dependsOnMap) { if (dependsOnMap.hasOwnProperty(doParm)) {
-                var doValue = $('#' + dependsOnMap[doParm]).val(); if (!doValue) { hasAllParms = false; } reqData[doParm] = doValue; }}
+                var doValue = $('#' + dependsOnMap[doParm]).val();
+                if (!doValue || doValue === "\u00a0") { hasAllParms = false; } else { reqData[doParm] = doValue; }
+            }}
             if (params) { reqData.term = params.term || ''; reqData.pageIndex = (params.page || 1) - 1; }
             else if (this.serverSearch) { reqData.term = ''; reqData.pageIndex = 0; }
             reqData.hasAllParms = hasAllParms;

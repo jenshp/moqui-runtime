@@ -168,6 +168,7 @@ $.fn.select2.amd.require(['select2/selection/search'], function (Search) {
     var oldRemoveChoice = Search.prototype.searchRemoveChoice;
     Search.prototype.searchRemoveChoice = function () { oldRemoveChoice.apply(this, arguments); this.$search.val(''); };
 });
+$.fn.select2.defaults.set("selectOnClose", true);
 // this is a fix for Select2 search input within Bootstrap Modal
 $.fn.modal.Constructor.prototype.enforceFocus = function() {};
 // set validator defaults that work with select2
@@ -187,4 +188,24 @@ $.validator.prototype.errorsFor = function(element) {
 };
 
 // custom event handler: programmatically trigger validation
-$(function() { $('.select2-hidden-accessible').on('select2:select', function(evt) { $(evt.params.data.element).valid(); }); });
+$(function() { $('.select2-hidden-accessible').on('select2:select', function(evt) { $(this).valid(); }); });
+
+// a date/time alias for inputmask
+Inputmask.extendAliases({
+    'yyyy-mm-dd hh:mm': {
+        mask:"y-1-2 h:s", placeholder:"yyyy-mm-dd hh:mm", alias:"datetime", separator:"-", leapday:"-02-29",
+        regex: {
+            val2pre: function (separator) {
+                var escapedSeparator = Inputmask.escapeRegex.call(this, separator);
+                return new RegExp("((0[13-9]|1[012])" + escapedSeparator + "[0-3])|(02" + escapedSeparator + "[0-2])");
+            }, //daypre
+            val2: function (separator) {
+                var escapedSeparator = Inputmask.escapeRegex.call(this, separator);
+                return new RegExp("((0[1-9]|1[012])" + escapedSeparator + "(0[1-9]|[12][0-9]))|((0[13-9]|1[012])" + escapedSeparator + "30)|((0[13578]|1[02])" + escapedSeparator + "31)");
+            }, //day
+            val1pre: new RegExp("[01]"), //monthpre
+            val1: new RegExp("0[1-9]|1[012]") //month
+        },
+        onKeyDown: function (e, buffer, caretPos, opts) { }
+    }
+});
