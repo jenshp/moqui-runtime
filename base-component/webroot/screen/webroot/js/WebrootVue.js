@@ -162,13 +162,24 @@ moqui.notifyMessages = function(messages, errors, validationErrors) {
                 }
                 notified = true;
             }
-        } else { $.notify({message:messages}, moqui.notifyOptsInfo); moqui.webrootVue.addNotify(messages, 'info'); notified = true; }
+        } else {
+            $.notify({message:messages}, moqui.notifyOptsInfo);
+            moqui.webrootVue.addNotify(messages, 'info');
+            notified = true;
+        }
     }
     if (errors) {
         if (moqui.isArray(errors)) {
             for (var ei=0; ei < errors.length; ei++) {
-                $.notify({message:errors[ei]}, moqui.notifyOptsError); moqui.webrootVue.addNotify(errors[ei], 'danger'); notified = true; }
-        } else { $.notify({message:errors}, moqui.notifyOptsError); moqui.webrootVue.addNotify(errors, 'danger'); notified = true; }
+                $.notify({message:errors[ei]}, moqui.notifyOptsError);
+                moqui.webrootVue.addNotify(errors[ei], 'danger');
+                notified = true;
+            }
+        } else {
+            $.notify({message:errors}, moqui.notifyOptsError);
+            moqui.webrootVue.addNotify(errors, 'danger');
+            notified = true;
+        }
     }
     if (validationErrors) {
         if (moqui.isArray(validationErrors)) {
@@ -216,13 +227,14 @@ moqui.handleLoadError = function (jqXHR, textStatus, errorThrown) {
 // NOTE: this may eventually split to change the activeSubscreens only on currentPathList change (for screens that support it)
 //     and if ever needed some sort of data refresh if currentParameters changes
 moqui.loadComponent = function(urlInfo, callback, divId) {
-    var path, extraPath, search, bodyParameters;
+    var path, extraPath, search, bodyParameters, renderModes;
     if (typeof urlInfo === 'string') {
         var questIdx = urlInfo.indexOf('?');
         if (questIdx > 0) { path = urlInfo.slice(0, questIdx); search = urlInfo.slice(questIdx+1); }
         else { path = urlInfo; }
     } else {
-        path = urlInfo.path; extraPath = urlInfo.extraPath; search = urlInfo.search; bodyParameters = urlInfo.bodyParameters;
+        path = urlInfo.path; extraPath = urlInfo.extraPath; search = urlInfo.search;
+        bodyParameters = urlInfo.bodyParameters; renderModes = urlInfo.renderModes;
     }
 
     // check cache
@@ -234,7 +246,13 @@ moqui.loadComponent = function(urlInfo, callback, divId) {
     }
 
     // prep url
-    var url = path; var isJsPath = (path.slice(-3) === '.js');
+    var url = path;
+    var isJsPath = (path.slice(-3) === '.js');
+    if (!isJsPath && urlInfo.renderModes && urlInfo.renderModes.indexOf("js") >= 0) {
+        // screen supports js explicitly so do that
+        url += '.js';
+        isJsPath = true;
+    }
     if (!isJsPath) url += '.vuet';
     if (extraPath && extraPath.length > 0) url += ('/' + extraPath);
     if (search && search.length > 0) url += ('?' + search);
@@ -283,10 +301,11 @@ moqui.EmptyComponent = Vue.extend({ template: '<div id="current-page-root"><div 
 
 /* ========== inline components ========== */
 Vue.component('m-link', {
-    props: { href:{type:String,required:true}, loadId:String },
+    props: { href:{type:String,required:true}, loadId:String, confirmation:String },
     template: '<a :href="linkHref" @click.prevent="go"><slot></slot></a>',
     methods: { go: function(event) {
         if (event.button !== 0) { return; }
+        if (this.confirmation && this.confirmation.length) { if (!window.confirm(this.confirmation)) { return; } }
         if (this.loadId && this.loadId.length > 0) { this.$root.loadContainer(this.loadId, this.href); }
         else { if (event.ctrlKey || event.metaKey) { window.open(this.linkHref, "_blank"); } else { this.$root.setUrl(this.linkHref); } }
     }},
@@ -334,7 +353,9 @@ Vue.component('box-body', {
 });
 Vue.component('container-dialog', {
     props: { id:{type:String,required:true}, title:String, width:{type:String,'default':'760'}, openDialog:{type:Boolean,'default':false} },
-    data: function() { return { isHidden:true, dialogStyle:{width:this.width + 'px'}}},
+    data: function() {
+        var viewportWidth = $(window).width();
+        return { isHidden:true, dialogStyle:{width:(this.width < viewportWidth ? this.width : viewportWidth) + 'px'}}},
     template:
     '<div :id="id" class="modal dynamic-dialog" aria-hidden="true" style="display:none;" tabindex="-1">' +
         '<div class="modal-dialog" :style="dialogStyle"><div class="modal-content">' +
@@ -370,7 +391,9 @@ Vue.component('dynamic-container', {
 Vue.component('dynamic-dialog', {
     props: { id:{type:String,required:true}, url:{type:String,required:true}, title:String, width:{type:String,'default':'760'},
         openDialog:{type:Boolean,'default':false} },
-    data: function() { return { curComponent:moqui.EmptyComponent, curUrl:"", isHidden:true, dialogStyle:{width:this.width + 'px'}}},
+    data: function() {
+        var viewportWidth = $(window).width();
+        return { curComponent:moqui.EmptyComponent, curUrl:"", isHidden:true, dialogStyle:{width:(this.width < viewportWidth ? this.width : viewportWidth) + 'px'}}},
     template:
     '<div :id="id" class="modal dynamic-dialog" aria-hidden="true" style="display: none;" tabindex="-1">' +
         '<div class="modal-dialog" :style="dialogStyle"><div class="modal-content">' +
@@ -1116,6 +1139,8 @@ Vue.component('subscreens-active', {
         var search = root.currentSearch;
         if (search && search.length > 0) { urlInfo.search = search; }
         urlInfo.bodyParameters = root.bodyParameters;
+        var navMenuItem = root.navMenuList[pathIndex + root.basePathSize];
+        if (navMenuItem && navMenuItem.renderModes) urlInfo.renderModes = navMenuItem.renderModes;
         console.info('subscreens-active loadActive pathIndex ' + pathIndex + ' pathName ' + vm.pathName + ' urlInfo ' + JSON.stringify(urlInfo));
         root.loading++;
         moqui.loadComponent(urlInfo, function(comp) { vm.activeComponent = comp; root.loading--; });
@@ -1263,9 +1288,9 @@ moqui.webrootVue = new Vue({
             if (cur.extraPathList) this.extraPathList = cur.extraPathList;
             // make sure full currentPathList and activeSubscreens is populated (necessary for minimal path urls)
             // fullPathList is the path after the base path, menu and link paths are in the screen tree context only so need to subtract off the appRootPath (Servlet Context Path)
-            var basePathSize = this.basePath.split('/').length - (this.appRootPath.split('/').length - 1);
-            var fullPathList = cur.path.split('/').slice(basePathSize);
-            console.info('nav updated fullPath ' + JSON.stringify(fullPathList) + ' currentPathList ' + JSON.stringify(this.currentPathList));
+            var basePathSize = this.basePathSize;
+            var fullPathList = cur.path.split('/').slice(basePathSize + 1);
+            console.info('nav updated fullPath ' + JSON.stringify(fullPathList) + ' currentPathList ' + JSON.stringify(this.currentPathList) + ' cur.path ' + cur.path + ' basePathSize ' + basePathSize);
             this.currentPathList = fullPathList;
             this.reloadSubscreens();
 
@@ -1323,15 +1348,19 @@ moqui.webrootVue = new Vue({
                 if (newPath.indexOf(this.linkBasePath) === 0) { newPath = newPath.slice(this.linkBasePath.length + 1); }
                 else if (newPath.indexOf(this.basePath) === 0) { newPath = newPath.slice(this.basePath.length + 1); }
                 this.currentPathList = newPath.split('/');
-            }},
-        currentLinkPath: function() { var curPath = this.currentPathList; var extraPath = this.extraPathList;
+            }
+        },
+        currentLinkPath: function() {
+            var curPath = this.currentPathList; var extraPath = this.extraPathList;
             return this.linkBasePath + (curPath && curPath.length > 0 ? '/' + curPath.join('/') : '') +
-                (extraPath && extraPath.length > 0 ? '/' + extraPath.join('/') : ''); },
+                (extraPath && extraPath.length > 0 ? '/' + extraPath.join('/') : '');
+        },
         currentSearch: {
             get: function() { return moqui.objToSearch(this.currentParameters); },
             set: function(newSearch) { this.currentParameters = moqui.searchToObj(newSearch); }
         },
         currentLinkUrl: function() { var srch = this.currentSearch; return this.currentLinkPath + (srch.length > 0 ? '?' + srch : ''); },
+        basePathSize: function() { return this.basePath.split('/').length - this.appRootPath.split('/').length; },
         ScreenTitle: function() { return this.navMenuList.length > 0 ? this.navMenuList[this.navMenuList.length - 1].title : ""; }
     },
     created: function() {
@@ -1356,6 +1385,18 @@ moqui.webrootVue = new Vue({
 
         $("#screen-document-dialog").on("hidden.bs.modal", function () { var jqEl = $("#screen-document-dialog-body");
                 jqEl.empty(); jqEl.append('<div class="spinner"><div>Loading…</div></div>'); });
+
+        // request Notification permission on load if not already granted or denied
+        if (window.Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission(function (status) {
+                if (status === "granted") {
+                    moqui.notifyMessages("Browser notifications enabled, if you don't want them use browser notification settings to block");
+                } else if (status === "denied") {
+                    moqui.notifyMessages("Browser notifications disabled, if you want them use browser notification settings to allow");
+                }
+            });
+        }
     }
+
 });
 window.addEventListener('popstate', function() { moqui.webrootVue.setUrl(window.location.pathname + window.location.search); });

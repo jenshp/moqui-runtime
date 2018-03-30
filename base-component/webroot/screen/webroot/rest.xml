@@ -41,8 +41,26 @@ along with this software (see the LICENSE.md file). If not, see
 
     curl -X GET -H "api_key: {apiKey}" http://localhost:8080/rest/s1/example/examples/TEST2
     -->
-    <transition name="api_key"><actions><script>ec.web.sendTextResponse(ec.user.getLoginKey())</script></actions>
-        <default-response type="none"/></transition>
+    <transition name="api_key" begin-transaction="false">
+        <actions><script>
+            try { ec.web.sendTextResponse(ec.user.getLoginKey()) }
+            catch (org.moqui.context.AuthenticationRequiredException are) { ec.web.sendError(401, are.message, are) }
+        </script></actions>
+        <default-response type="none"/>
+    </transition>
+    <!-- Get a session token for clients that are not authenticated (no api_key) to use for all request methods other than GET -->
+    <transition name="moquiSessionToken" begin-transaction="false">
+        <actions><script>ec.web.sendTextResponse(ec.web.sessionToken)</script></actions>
+        <default-response type="none"/>
+    </transition>
+    <!-- REST API calls from a browser or session aware client will have an active session, use this for explicit logout and terminate session -->
+    <transition name="logout" begin-transaction="false">
+        <actions><script>
+            if (ec.user.username) { ec.user.logoutUser(); ec.web.sendTextResponse("successful") }
+            else { ec.web.sendTextResponse("no_user") }
+        </script></actions>
+        <default-response type="none"/>
+    </transition>
 
     <!--
     EXAMPLES
@@ -163,8 +181,10 @@ along with this software (see the LICENSE.md file). If not, see
         <default-response type="none"/>
     </transition>
     <!-- DEPRECATED: v1 is the same as e1, was the original Entity REST API; e1 is preferred to distinguish from m1, s1; v1 should be considered deprecated -->
-    <transition name="v1" read-only="true"><actions><script>ec.web.handleEntityRestCall(sri.screenUrlInfo.extraPathNameList, false)</script></actions>
-        <default-response type="none"/></transition>
+    <transition name="v1" read-only="true">
+        <actions><script>ec.web.handleEntityRestCall(sri.screenUrlInfo.extraPathNameList, false)</script></actions>
+        <default-response type="none"/>
+    </transition>
 
     <!--
     To get the json-schema (see http://json-schema.org) for an entity use a request like:
