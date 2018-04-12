@@ -1319,7 +1319,14 @@ S2.define('select2/keys',[
     UP: 38,
     RIGHT: 39,
     DOWN: 40,
-    DELETE: 46
+    DELETE: 46,
+    ZERO: 48, NINE: 57,
+    NUMZERO: 96, NUMSTAR: 106,
+    NUMSUBTRACT: 109, DIVIDE: 111,
+    A: 65, Z: 90,
+    SEMICOLON: 186, GRAVE: 192,
+    OPENBRACKET: 219, SINGLEQUOTE: 222,
+    NUMPLUS: 107
   };
 
   return KEYS;
@@ -3962,7 +3969,7 @@ S2.define('select2/dropdown/search',[
     });
 
     container.on('focus', function () {
-      if (container.isOpen()) {
+      if (!container.isOpen()) {
         self.$search.focus();
       }
     });
@@ -5371,7 +5378,7 @@ S2.define('select2/core',[
       var key = evt.which;
 
       if (self.isOpen()) {
-        if (key === KEYS.TAB) {
+        if (key === KEYS.TAB || key === KEYS.NUMPLUS) {
           self.options.set('okToSelectOnClose', true);
           self.close();
 
@@ -5381,16 +5388,31 @@ S2.define('select2/core',[
           // Attempt to pass focus to the next input element
           var el = self.$element[0];
           var f = el.form;
-          var els = f.elements;
+          var allEls = f.elements;
+          var els = [];
+          for( var i = 0, len = allEls.length; i<len; i++ ) {
+            if( allEls[i].type != 'hidden' &&
+                allEls[i].style.display != 'none' &&
+                !allEls[i].readOnly &&
+                !allEls[i].disabled ) {
+              els.push(allEls[i]);
+            }
+          }
           var x, nextEl;
           for (var i=0, len=els.length; i<len; i++) {
             x = els[i];
             if (el == x) {
-              // Depending on whether shift is pressed to focus next/previous
-              nextEl = evt.shiftKey ? els[i == 0 ? len-1 : (i-1)] : els[i == len-1 ? 0 : (i+1)];
-              if (nextEl.focus) {
-                nextEl.focus();
-                break;
+              // Found the current element, search for the next focusable element
+              for(var j = 1; j < els.length; j++ ) {
+                // Depending on whether shift is pressed to focus next/previous
+                idx = evt.shiftKey ? i-j : i+j;
+                if( idx < 0 ) idx = len+idx;
+                if( idx >= len ) idx = idx-len;
+                nextEl = els[idx];
+                if (nextEl.focus && $(nextEl).is(':visible') && $(nextEl).attr('tabIndex') != -2) {
+                  nextEl.focus();
+                  break;
+                }
               }
             }
           }
@@ -5401,9 +5423,24 @@ S2.define('select2/core',[
 
           evt.preventDefault();
         } else if (key === KEYS.ENTER) {
-          self.trigger('results:select', {});
+          // self.trigger('results:select', {});
+
+          // evt.preventDefault();
+          // Select the current option, but leave the focus on the dropdown
+          // to preserve correct tab order
+          self.options.set('okToSelectOnClose', true);
+          self.close();
 
           evt.preventDefault();
+          self.options.set('okToSelectOnClose', false);
+
+          // In the case that the input was opened but no new select was made, ensure that
+          // the element retains focus.
+          self.$element[0].focus();
+
+          if( $(self.$element[0]).hasClass('submit-on-enter') && self.$element[0].form ) {
+            self.$element[0].form.submit();
+          }
         } else if ((key === KEYS.SPACE && evt.ctrlKey)) {
           self.trigger('results:toggle', {});
 
@@ -5417,12 +5454,58 @@ S2.define('select2/core',[
 
           evt.preventDefault();
         }
-      } else {
-        if (key === KEYS.ENTER || key === KEYS.SPACE ||
-            (key === KEYS.DOWN && evt.altKey)) {
+      } else { // Currently closed
+        if (key === KEYS.NUMPLUS) {
+          // Attempt to pass focus to the next input element
+          var el = self.$element[0];
+          var f = el.form;
+          var allEls = f.elements;
+          var els = [];
+          for( var i = 0, len = allEls.length; i<len; i++ ) {
+            if( allEls[i].type != 'hidden' &&
+                allEls[i].style.display != 'none' &&
+                !allEls[i].readOnly &&
+                !allEls[i].disabled ) {
+              els.push(allEls[i]);
+            }
+          }
+          var x, nextEl;
+          for (var i=0, len=els.length; i<len; i++) {
+            x = els[i];
+            if (el == x) {
+              // Found the current element, search for the next focusable element
+              for(var j = 1; j < els.length; j++ ) {
+                // Depending on whether shift is pressed to focus next/previous
+                idx = evt.shiftKey ? i-j : i+j;
+                if( idx < 0 ) idx = len+idx;
+                if( idx >= len ) idx = idx-len;
+                nextEl = els[idx];
+                if (nextEl.focus && $(nextEl).is(':visible') && $(nextEl).attr('tabIndex') != -2) {
+                  nextEl.focus();
+                  break;
+                }
+              }
+            }
+          }
+
+          evt.preventDefault();
+
+        } else if (key === KEYS.ENTER || key === KEYS.SPACE ||
+            // (key === KEYS.DOWN && evt.altKey)) {
+            key === KEYS.DOWN) {
           self.open();
 
           evt.preventDefault();
+        } else if( key >= KEYS.ZERO && key <= KEYS.NINE ||
+                   key >= KEYS.NUMZERO && key <= KEYS.NUMSTAR ||
+                   key >= KEYS.NUMSUBTRACT && key <= KEYS.DIVIDE ||
+                   key >= KEYS.A && key <= KEYS.Z ||
+                   key >= KEYS.SEMICOLON && key <= KEYS.GRAVE ||
+                   key >= KEYS.OPENBRACKET && key <= KEYS.SINGLEQUOTE ) {
+          self.open();
+          self.dropdown.$search.val(evt.key);
+          self.trigger('selection:update');
+          etc.preventDefault();
         }
       }
     });

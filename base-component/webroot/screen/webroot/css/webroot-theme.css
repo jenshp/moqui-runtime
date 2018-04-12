@@ -27,8 +27,9 @@ div.message { width: 600px; margin: 2px auto 2px auto; border: 1px solid #DDDDDF
 div.message span { font-size: 1em; }
 div.error span { color: red; }
 
-tt, pre, pre code { font-family: "Courier New", Courier, monospace; }
+tt, pre, pre code, .text-mono { font-family: monospace,monospace; font-size: 1em; }
 .bg-dark pre { background-color: #3a3a3a; color: #EEE; border-color: #222; }
+.bg-dark .well { background-color: #303030; color: #EEE; border-color: #222; }
 
 /* .button-plain is for hidden forms with a button element but we want it to look like an anchor */
 button.button-plain { border: 0; padding: 0; background: transparent; margin: 0; color: #428bca; }
@@ -57,12 +58,17 @@ input:focus:valid, textarea:focus:valid { background-color: #EEE; }
 
 nav.form-list-nav, table.table>thead>tr>th { background: #EEE; }
 .form-list-sub-rows table.table>thead>tr>th { background: #D8D8D8; }
-.bg-dark nav.form-list-nav, .bg-dark table.table>thead>tr>th { background: #333; }
+.bg-dark nav.form-list-nav, .bg-dark table.table>thead>tr>th { background: #222; }
 .bg-dark .form-list-sub-rows table.table>thead>tr>th { background: #383838; }
+.bg-dark .modal-content nav.form-list-nav, .bg-dark .modal-content table.table>thead>tr>th { background: #EEE; }
+.bg-dark .modal-content .form-list-sub-rows table.table>thead>tr>th { background: #D8D8D8; }
 .form-list-sub-rows td { background: linear-gradient(rgba(0,0,0,0.1),rgba(0,0,0,0.1)); }
 .bg-dark .form-list-sub-rows td { background: linear-gradient(rgba(192,192,192,0.1),rgba(192,192,192,0.1)); }
 
 .form-single-field-group { border-top: #888 solid thin; }
+
+label.is-changed { text-decoration: underline; text-decoration-color: #0097cf; text-decoration-style: solid; }
+.is-changed { font-weight: bolder; }
 
 /* ======================= Handy Styles ======================= */
 
@@ -82,6 +88,10 @@ ul.float-box li { background: #EEEEEE; box-shadow: 0 0 0 1px #F8F8F8 inset, 0 0 
 .bg-dark .nav.nav-tabs .active a { background-color: inherit; color: inherit; border-color: black; border-bottom-color: #3a3a3a; }
 .bg-dark .nav.nav-tabs { border-color: black; }
 
+body.dev #top nav { background: #0c1b29; }
+body.test #top nav { background: #224422; }
+body.test #content { background: #f0fff0; }
+
 .navbar-inverse .navbar-nav > li > a { font-size: 1.1em; color: #BBB; }
 .navbar-inverse .navbar-nav > li > a:hover, .navbar-inverse .navbar-nav > li > a:focus { color: #fff; background-color: transparent; }
 
@@ -93,12 +103,12 @@ ul.float-box li { background: #EEEEEE; box-shadow: 0 0 0 1px #F8F8F8 inset, 0 0 
 
 /* Variations on Bootstrap default table styles */
 .table .table { background-color: transparent; }
+.table-hover>tbody>tr:hover { background-color: #f0f0f0; }
 .bg-dark .table-striped th, .bg-dark .table-striped td { border-color: transparent; }
-.bg-dark .table-striped > tbody > tr:nth-child(odd):not(.danger):not(.info):not(.warning):not(.success) > td { background-color: #303030; }
-.bg-dark .table-hover > tbody > tr:hover > td { background-color: #444444; }
-
-.bg-light .table-striped>tbody>tr:nth-child(odd):not(.danger):not(.info):not(.warning):not(.success)>td { background-color: rgba(243, 243, 243, 0.5); }
-.bg-light .table-hover > tbody > tr:hover > td { background-color: rgba(234, 234, 234, 0.5); }
+.bg-dark .table-striped>tbody>tr:nth-child(odd):not(.danger):not(.info):not(.warning):not(.success) { background-color: #303030; }
+.bg-dark .table-hover>tbody>tr:hover>td { background-color: #444444; }
+.bg-dark .modal-content .table-striped>tbody>tr:nth-child(odd):not(.danger):not(.info):not(.warning):not(.success) { background-color: #f9f9f9; }
+.bg-dark .modal-content .table-hover>tbody>tr:hover>td { background-color: #f0f0f0; }
 
 /* prevent extra padding at the bottom of form-single within container-box (panel) */
 .panel-body fieldset > .form-group:last-child { margin-bottom: 0; }
@@ -106,7 +116,7 @@ ul.float-box li { background: #EEEEEE; box-shadow: 0 0 0 1px #F8F8F8 inset, 0 0 
 /* ================ Other, Fix Styles =============== */
 
 .bg-dark .bootstrap-datetimepicker-widget { color: #222222; }
-.bg-dark .modal-dialog { color: #222222; }
+.bg-dark .modal-content { color: #222222; }
 .bg-dark .select2-dropdown { color: #222222; }
 
 .bg-dark .jstree-clicked { background-color: #013 !important; }
@@ -121,6 +131,7 @@ form.editable-form button { background: white; color: #333; border: 1px solid; b
 /* invert images in dark theme, good for black and white, may not be good otherwise so use img.invertible class */
 .bg-dark img.invertible { -webkit-filter: invert(90%); filter: invert(90%); }
 
+/* Twitter TypeAhead styles for autocomplete */
 .tt-menu { background-color: #fff; }
 .bg-dark .tt-menu { background-color: #3a3a3a; }
 .tt-suggestion:hover { cursor: pointer; color: #fff; background-color: #0097cf; }

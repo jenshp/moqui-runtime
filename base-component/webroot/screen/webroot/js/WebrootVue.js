@@ -132,30 +132,71 @@ moqui.loadStylesheet = function(href, rel, type) {
 moqui.retryInlineScript = function(src, count) {
     try { eval(src); } catch(e) {
         src = src.trim();
-        console.warn('error ' + count + ' running inline script: ' + src.slice(0, 30) + '...');
+        var retryTime = count <= 5 ? count*count*100 : 'N/A';
+        console.warn('inline script error ' + count + ' retry ' + retryTime + ' script: ' + src.slice(0, 80) + '...');
         console.warn(e);
-        if (count <= 5) setTimeout(moqui.retryInlineScript, 200, src, count+1);
+        if (count <= 5) setTimeout(moqui.retryInlineScript, retryTime, src, count+1);
     }
 };
 
 /* ========== notify and error handling ========== */
-moqui.notifyOpts = { delay:6000, offset:{x:20,y:70}, placement:{from:'top',align:'right'}, z_index:1100, type:'success',
-    animate:{ enter:'animated fadeInDown', exit:'animated fadeOutUp' } };
-moqui.notifyMessages = function(messages, errors) {
+moqui.notifyOpts = { delay:1500, timer:250, offset:{x:20,y:60}, placement:{from:'top',align:'right'}, z_index:1100, type:'success',
+    animate:{ enter:'animated fadeInDown', exit:'' } }; // no animate on exit: animated fadeOutUp
+moqui.notifyOptsInfo = { delay:3000, timer:250, offset:{x:20,y:60}, placement:{from:'top',align:'right'}, z_index:1100, type:'info',
+    animate:{ enter:'animated fadeInDown', exit:'' } }; // no animate on exit: animated fadeOutUp
+moqui.notifyOptsError = { delay:5000, timer:250, offset:{x:20,y:60}, placement:{from:'top',align:'right'}, z_index:1100, type:'danger',
+    animate:{ enter:'animated fadeInDown', exit:'' } }; // no animate on exit: animated fadeOutUp
+moqui.notifyMessages = function(messages, errors, validationErrors) {
     var notified = false;
     if (messages) {
         if (moqui.isArray(messages)) {
             for (var mi=0; mi < messages.length; mi++) {
-                $.notify({message:messages[mi]}, $.extend({}, moqui.notifyOpts, {type: 'info'})); moqui.webrootVue.addNotify(messages[mi], 'info'); notified = true; }
-        } else { $.notify({message:messages}, $.extend({}, moqui.notifyOpts, {type: 'info'})); moqui.webrootVue.addNotify(messages, 'info'); notified = true; }
+                var messageItem = messages[mi];
+                if (moqui.isPlainObject(messageItem)) {
+                    var msgType = messageItem.type; if (!msgType || !msgType.length) msgType = 'info';
+                    $.notify({message:messageItem.message}, $.extend({}, moqui.notifyOptsInfo, { type:msgType }));
+                    moqui.webrootVue.addNotify(messageItem.message, msgType);
+                } else {
+                    $.notify({message:messageItem}, moqui.notifyOptsInfo);
+                    moqui.webrootVue.addNotify(messageItem, 'info');
+                }
+                notified = true;
+            }
+        } else {
+            $.notify({message:messages}, moqui.notifyOptsInfo);
+            moqui.webrootVue.addNotify(messages, 'info');
+            notified = true;
+        }
     }
     if (errors) {
         if (moqui.isArray(errors)) {
             for (var ei=0; ei < errors.length; ei++) {
-                $.notify({message:errors[ei]}, $.extend({}, moqui.notifyOpts, {delay:10000, type:'danger'})); moqui.webrootVue.addNotify(errors[ei], 'danger'); notified = true; }
-        } else { $.notify({message:errors}, $.extend({}, moqui.notifyOpts, {delay:10000, type:'danger'})); moqui.webrootVue.addNotify(errors, 'danger'); notified = true; }
+                $.notify({message:errors[ei]}, moqui.notifyOptsError);
+                moqui.webrootVue.addNotify(errors[ei], 'danger');
+                notified = true;
+            }
+        } else {
+            $.notify({message:errors}, moqui.notifyOptsError);
+            moqui.webrootVue.addNotify(errors, 'danger');
+            notified = true;
+        }
+    }
+    if (validationErrors) {
+        if (moqui.isArray(validationErrors)) {
+            for (var vei=0; vei < validationErrors.length; vei++) { moqui.notifyValidationError(validationErrors[vei]); notified = true; }
+        } else { moqui.notifyValidationError(validationErrors); notified = true; }
     }
     return notified;
+};
+moqui.notifyValidationError = function(valError) {
+    var message = valError;
+    if (moqui.isPlainObject(valError)) {
+        message = valError.message;
+        if (valError.fieldPretty && valError.fieldPretty.length) message = message + " (for field " + valError.fieldPretty + ")";
+    }
+    $.notify({message:message}, moqui.notifyOptsError);
+    moqui.webrootVue.addNotify(message, 'danger');
+
 };
 moqui.handleAjaxError = function(jqXHR, textStatus, errorThrown) {
     var resp = jqXHR.responseText;
@@ -164,15 +205,15 @@ moqui.handleAjaxError = function(jqXHR, textStatus, errorThrown) {
     console.warn('ajax ' + textStatus + ' (' + jqXHR.status + '), message ' + errorThrown /*+ '; response: ' + resp*/);
     // console.error('respObj: ' + JSON.stringify(respObj));
     var notified = false;
-    if (respObj && moqui.isPlainObject(respObj)) { notified = moqui.notifyMessages(respObj.messages, respObj.errors); }
+    if (respObj && moqui.isPlainObject(respObj)) { notified = moqui.notifyMessages(respObj.messageInfos, respObj.errors, respObj.validationErrors); }
     else if (resp && moqui.isString(resp) && resp.length) { notified = moqui.notifyMessages(resp); }
 
     // reload on 401 (Unauthorized) so server can remember current URL and redirect to login screen
     if (jqXHR.status === 401) { if (moqui.webrootVue) { window.location.href = moqui.webrootVue.currentLinkUrl; } else { window.location.reload(true); }
     } else if (jqXHR.status === 0) { if (errorThrown.indexOf('abort') < 0) { var msg = 'Could not connect to server';
-        $.notify({ message:msg }, $.extend({}, moqui.notifyOpts, {delay:10000, type:'danger'})); moqui.webrootVue.addNotify(msg, 'danger'); }
+        $.notify({ message:msg }, moqui.notifyOptsError); moqui.webrootVue.addNotify(msg, 'danger'); }
     } else if (!notified) { var errMsg = 'Error: ' + errorThrown + ' (' + textStatus + ')';
-        $.notify({ message:errMsg }, $.extend({}, moqui.notifyOpts, {delay:10000, type:'danger'})); moqui.webrootVue.addNotify(errMsg, 'danger');
+        $.notify({ message:errMsg }, moqui.notifyOptsError); moqui.webrootVue.addNotify(errMsg, 'danger');
     }
 };
 
@@ -186,13 +227,14 @@ moqui.handleLoadError = function (jqXHR, textStatus, errorThrown) {
 // NOTE: this may eventually split to change the activeSubscreens only on currentPathList change (for screens that support it)
 //     and if ever needed some sort of data refresh if currentParameters changes
 moqui.loadComponent = function(urlInfo, callback, divId) {
-    var path, extraPath, search;
+    var path, extraPath, search, bodyParameters, renderModes;
     if (typeof urlInfo === 'string') {
         var questIdx = urlInfo.indexOf('?');
         if (questIdx > 0) { path = urlInfo.slice(0, questIdx); search = urlInfo.slice(questIdx+1); }
         else { path = urlInfo; }
     } else {
         path = urlInfo.path; extraPath = urlInfo.extraPath; search = urlInfo.search;
+        bodyParameters = urlInfo.bodyParameters; renderModes = urlInfo.renderModes;
     }
 
     // check cache
@@ -204,13 +246,19 @@ moqui.loadComponent = function(urlInfo, callback, divId) {
     }
 
     // prep url
-    var url = path; var isJsPath = (path.slice(-3) === '.js');
+    var url = path;
+    var isJsPath = (path.slice(-3) === '.js');
+    if (!isJsPath && urlInfo.renderModes && urlInfo.renderModes.indexOf("js") >= 0) {
+        // screen supports js explicitly so do that
+        url += '.js';
+        isJsPath = true;
+    }
     if (!isJsPath) url += '.vuet';
     if (extraPath && extraPath.length > 0) url += ('/' + extraPath);
     if (search && search.length > 0) url += ('?' + search);
 
     console.info("loadComponent " + url + (divId ? " id " + divId : ''));
-    $.ajax({ type:"GET", url:url, error:moqui.handleLoadError, success: function(resp, status, jqXHR) {
+    var ajaxSettings = { type:"GET", url:url, error:moqui.handleLoadError, success: function(resp, status, jqXHR) {
         // console.info(resp);
         if (!resp) { callback(moqui.NotFound); }
         var isServerStatic = (jqXHR.getResponseHeader("Cache-Control").indexOf("max-age") >= 0);
@@ -242,7 +290,9 @@ moqui.loadComponent = function(urlInfo, callback, divId) {
             if (resp.screenUrl && resp.screenUrl.length > 0) { this.$root.setUrl(resp.screenUrl); }
             else if (resp.redirectUrl && resp.redirectUrl.length > 0) { window.location.replace(resp.redirectUrl); }
         } else { callback(moqui.NotFound); }
-    }});
+    }};
+    if (bodyParameters && !$.isEmptyObject(bodyParameters)) { ajaxSettings.type = "POST"; ajaxSettings.data = bodyParameters; }
+    $.ajax(ajaxSettings);
 };
 
 /* ========== placeholder components ========== */
@@ -251,14 +301,15 @@ moqui.EmptyComponent = Vue.extend({ template: '<div id="current-page-root"><div 
 
 /* ========== inline components ========== */
 Vue.component('m-link', {
-    props: { href:{type:String,required:true}, loadId:String },
+    props: { href:{type:String,required:true}, loadId:String, confirmation:String },
     template: '<a :href="linkHref" @click.prevent="go"><slot></slot></a>',
     methods: { go: function(event) {
         if (event.button !== 0) { return; }
+        if (this.confirmation && this.confirmation.length) { if (!window.confirm(this.confirmation)) { return; } }
         if (this.loadId && this.loadId.length > 0) { this.$root.loadContainer(this.loadId, this.href); }
         else { if (event.ctrlKey || event.metaKey) { window.open(this.linkHref, "_blank"); } else { this.$root.setUrl(this.linkHref); } }
     }},
-    computed: { linkHref: function () { return this.href.indexOf(this.$root.basePath) === 0 ? this.href.replace(this.$root.basePath, this.$root.linkBasePath) : this.href; } }
+    computed: { linkHref: function () { return this.$root.getLinkPath(this.href); } }
 });
 Vue.component('m-script', {
     props: { src:String, type:{type:String,'default':'text/javascript'} },
@@ -295,10 +346,16 @@ Vue.component('container-box', {
     '</div>',
     methods: { toggleBody: function() { this.isBodyOpen = !this.isBodyOpen; } }
 });
-Vue.component('box-body', { template: '<div class="panel-body"><slot></slot></div>' });
+Vue.component('box-body', {
+    props: { height:String },
+    data: function() { return this.height ? { dialogStyle:{'max-height':this.height+'px', 'overflow-y':'auto'}} : {dialogStyle:{}}},
+    template: '<div class="panel-body" :style="dialogStyle"><slot></slot></div>'
+});
 Vue.component('container-dialog', {
     props: { id:{type:String,required:true}, title:String, width:{type:String,'default':'760'}, openDialog:{type:Boolean,'default':false} },
-    data: function() { return { isHidden:true, dialogStyle:{width:this.width + 'px'}}},
+    data: function() {
+        var viewportWidth = $(window).width();
+        return { isHidden:true, dialogStyle:{width:(this.width < viewportWidth ? this.width : viewportWidth) + 'px'}}},
     template:
     '<div :id="id" class="modal dynamic-dialog" aria-hidden="true" style="display:none;" tabindex="-1">' +
         '<div class="modal-dialog" :style="dialogStyle"><div class="modal-content">' +
@@ -334,7 +391,9 @@ Vue.component('dynamic-container', {
 Vue.component('dynamic-dialog', {
     props: { id:{type:String,required:true}, url:{type:String,required:true}, title:String, width:{type:String,'default':'760'},
         openDialog:{type:Boolean,'default':false} },
-    data: function() { return { curComponent:moqui.EmptyComponent, curUrl:"", isHidden:true, dialogStyle:{width:this.width + 'px'}}},
+    data: function() {
+        var viewportWidth = $(window).width();
+        return { curComponent:moqui.EmptyComponent, curUrl:"", isHidden:true, dialogStyle:{width:(this.width < viewportWidth ? this.width : viewportWidth) + 'px'}}},
     template:
     '<div :id="id" class="modal dynamic-dialog" aria-hidden="true" style="display: none;" tabindex="-1">' +
         '<div class="modal-dialog" :style="dialogStyle"><div class="modal-content">' +
@@ -388,7 +447,7 @@ Vue.component('tree-item', {
     template:
     '<li :id="model.id">' +
         '<i v-if="isFolder" @click="toggle" class="glyphicon" :class="{\'glyphicon-chevron-right\':!open, \'glyphicon-chevron-down\':open}"></i>' +
-        '<span v-else style="width:1em;display:inline-block;"></span>' +
+        '<i v-else class="glyphicon glyphicon-unchecked"></i>' +
         ' <span @click="setSelected">' +
             '<m-link v-if="model.a_attr" :href="model.a_attr.urlText" :load-id="model.a_attr.loadId" :class="{\'text-success\':selected}">{{model.text}}</m-link>' +
             '<span v-if="!model.a_attr" :class="{\'text-success\':selected}">{{model.text}}</span>' +
@@ -443,8 +502,8 @@ Vue.component('m-editable', {
 Vue.component('m-form', {
     props: { action:{type:String,required:true}, method:{type:String,'default':'POST'},
         submitMessage:String, submitReloadId:String, submitHideId:String, focusField:String, noValidate:Boolean },
-    data: function() { return { fields:{} }},
-    template: '<form @submit.prevent="submitForm" class="validation-engine-init"><slot></slot></form>',
+    data: function() { return { fields:{}, fieldsChanged:{} }},
+    template: '<form @submit.prevent="submitForm"><slot></slot></form>',
     methods: {
         submitForm: function submitForm() {
             var jqEl = $(this.$el);
@@ -465,8 +524,31 @@ Vue.component('m-form', {
                 // console.info('m-form parameters ' + JSON.stringify(formData));
                 // for (var key of formData.keys()) { console.log('m-form key ' + key + ' val ' + JSON.stringify(formData.get(key))); }
                 this.$root.loading++;
-                $.ajax({ type:this.method, url:this.action, data:formData, contentType:false, processData:false,
+                $.ajax({ type:this.method, url:(this.$root.appRootPath + this.action), data:formData, contentType:false, processData:false,
                     headers:{Accept:'application/json'}, error:moqui.handleLoadError, success:this.handleResponse });
+            } else if (!this.noValidate) {
+                // For convenience, attempt to focus the first invalid element.
+                // Begin by finding the first invalid input
+                var invEle = jqEl.find('div.has-error input, div.has-error select, div.has-error textarea').first();
+                if (invEle.length) {
+                    // If the element is inside a collapsed panel, attempt to open it.
+                    // Find parent (if it exists) with class .panel-collapse.collapse (works for accordion and regular panels)
+                    var nearestPanel = invEle.parents('div.panel-collapse.collapse').last();
+                    if (nearestPanel.length) {
+                        // Only bother if the panel is not currently open
+                        if (!nearestPanel.hasClass('in')) {
+                            // From there find sibling with class panel-heading
+                            var panelHeader = nearestPanel.prevAll('div.panel-heading').last();
+                            if (panelHeader.length) {
+                                // Here is where accordion and regular panels diverge.
+                                var panelLink = panelHeader.find('a[data-toggle="collapse"]').first();
+                                if (panelLink.length) panelLink.click();
+                                else panelHeader.click();
+                                setTimeout(function() { invEle.focus(); }, 250);
+                            } else invEle.focus();
+                        } else invEle.focus();
+                    } else invEle.focus();
+                }
             }
         },
         handleResponse: function(resp) {
@@ -474,7 +556,7 @@ Vue.component('m-form', {
             var notified = false;
             // console.info('m-form response ' + JSON.stringify(resp));
             if (resp && moqui.isPlainObject(resp)) {
-                notified = moqui.notifyMessages(resp.messages, resp.errors);
+                notified = moqui.notifyMessages(resp.messageInfos, resp.errors);
                 if (resp.screenUrl && resp.screenUrl.length > 0) { this.$root.setUrl(resp.screenUrl); }
                 else if (resp.redirectUrl && resp.redirectUrl.length > 0) { window.location.href = resp.redirectUrl; }
             } else { console.warn('m-form no response or non-JSON response: ' + JSON.stringify(resp)) }
@@ -484,10 +566,48 @@ Vue.component('m-form', {
             if (subMsg && subMsg.length) {
                 var responseText = resp; // this is set for backward compatibility in case message relies on responseText as in old JS
                 var message = eval('"' + subMsg + '"');
-                $.notify({ message:message }, $.extend({}, moqui.notifyOpts, {type:'success'}));
+                $.notify({ message:message }, moqui.notifyOpts);
                 moqui.webrootVue.addNotify(message, 'success');
             } else if (!notified) {
-                $.notify({ message:"Form data saved" }, $.extend({}, moqui.notifyOpts, {type:'success'}));
+                $.notify({ message:"Form data saved" }, moqui.notifyOpts);
+            }
+        },
+        fieldChange: function (evt) {
+            var targetDom = evt.delegateTarget; var targetEl = $(targetDom);
+            if (targetEl.hasClass("input-group") && targetEl.children("input").length) {
+                // special case for date-time using bootstrap-datetimepicker
+                targetEl = targetEl.children("input").first();
+                targetDom = targetEl.get(0);
+            }
+            var changed = false;
+            if (targetDom.nodeName === "INPUT" || targetDom.nodeName === "TEXTAREA") {
+                if (targetEl.attr("type") === "radio" || targetEl.attr("type") === "checkbox") {
+                    changed = targetDom.checked !== targetDom.defaultChecked; }
+                else { changed = targetDom.value !== targetDom.defaultValue; }
+            } else if (targetDom.nodeName === "SELECT") {
+                // TODO: doesn't seem to work with select2, always shows changed; defaultSelected may not work as set by JS
+                if (targetDom.multiple) {
+                    var optLen = targetDom.options.length;
+                    for (var i = 0; i < optLen; i++) {
+                        var opt = targetDom.options[i];
+                        if (opt.selected !== opt.defaultSelected) { changed = true; break; }
+                    }
+                } else {
+                    changed = !targetDom.options[targetDom.selectedIndex].defaultSelected;
+                }
+            }
+            // console.log("changed? " + changed + " node " + targetDom.nodeName + " type " + targetEl.attr("type") + " " + targetEl.attr("name") + " to " + targetDom.value + " default " + targetDom.defaultValue);
+            // console.log(targetDom.defaultValue);
+            if (changed) {
+                this.fieldsChanged[targetEl.attr("name")] = true;
+                targetEl.parents(".form-group").children("label").addClass("is-changed");
+                targetEl.parents(".form-group").find(".select2-selection").addClass("is-changed");
+                targetEl.addClass("is-changed");
+            } else {
+                this.fieldsChanged[targetEl.attr("name")] = false;
+                targetEl.parents(".form-group").children("label").removeClass("is-changed");
+                targetEl.parents(".form-group").find(".select2-selection").removeClass("is-changed");
+                targetEl.removeClass("is-changed");
             }
         }
     },
@@ -499,12 +619,16 @@ Vue.component('m-form', {
         });
         jqEl.find('[data-toggle="tooltip"]').tooltip({placement:'auto top'});
         if (this.focusField && this.focusField.length > 0) jqEl.find('[name^="' + this.focusField + '"]').addClass('default-focus').focus();
+        // watch changed fields
+        jqEl.find(':input').on('change', this.fieldChange);
+        // special case for date-time using bootstrap-datetimepicker
+        jqEl.find('div.input-group.date').on('change', this.fieldChange);
     }
 });
 Vue.component('form-link', {
-    props: { action:{type:String,required:true}, focusField:String, noValidate:Boolean },
+    props: { action:{type:String,required:true}, focusField:String, noValidate:Boolean, bodyParameterNames:Array },
     data: function() { return { fields:{} }},
-    template: '<form @submit.prevent="submitForm" class="validation-engine-init"><slot :clearForm="clearForm"></slot></form>',
+    template: '<form @submit.prevent="submitForm"><slot :clearForm="clearForm"></slot></form>',
     methods: {
         submitForm: function() {
             var jqEl = $(this.$el);
@@ -517,21 +641,26 @@ Vue.component('form-link', {
                     $btn.prop('disabled', true);
                     setTimeout(function() { $btn.prop('disabled', false); }, 3000);
                 }
-                var otherParms = this.fields;
-                var parmStr = "";
                 var parmList = jqEl.serializeArray();
-                for (var parmName in otherParms) { if (otherParms.hasOwnProperty(parmName)) {
-                    if (parmStr.length > 0) { parmStr += '&'; } parmStr += (parmName + '=' + otherParms[parmName]); }}
+                $.each(this.fields, function (key, value) { parmList.push({name:key, value:value}); });
                 var extraList = [];
                 var plainKeyList = [];
+                var parmStr = "";
+                var bodyParameters = null;
                 for (var pi=0; pi<parmList.length; pi++) {
                     var parm = parmList[pi]; var key = parm.name; var value = parm.value;
-                    if (value.trim().length === 0 || key === "moquiSessionToken" || key === "moquiFormName" || key.indexOf('%5B%5D') > 0) continue;
-                    if (key.indexOf("_op") > 0 || key.indexOf("_not") > 0 || key.indexOf("_ic") > 0) { extraList.push(parm); }
-                    else {
+                    if (value.trim().length === 0 || key === "moquiSessionToken" || key === "moquiFormName" || key.indexOf('[]') > 0) continue;
+                    if (key.indexOf("_op") > 0 || key.indexOf("_not") > 0 || key.indexOf("_ic") > 0) {
+                        extraList.push(parm);
+                    } else {
                         plainKeyList.push(key);
-                        if (parmStr.length > 0) { parmStr += '&'; }
-                        parmStr += (encodeURIComponent(key) + '=' + encodeURIComponent(value));
+                        if (this.bodyParameterNames && this.bodyParameterNames.indexOf(key) >= 0) {
+                            if (!bodyParameters) bodyParameters = {};
+                            bodyParameters[key] = value;
+                        } else {
+                            if (parmStr.length > 0) { parmStr += '&'; }
+                            parmStr += (encodeURIComponent(key) + '=' + encodeURIComponent(value));
+                        }
                     }
                 }
                 for (var ei=0; ei<extraList.length; ei++) {
@@ -547,7 +676,8 @@ Vue.component('form-link', {
                 }
                 var url = this.action;
                 if (url.indexOf('?') > 0) { url = url + '&' + parmStr; } else { url = url + '?' + parmStr; }
-                this.$root.setUrl(url);
+                // console.log("form-link url " + url + " bodyParameters " + JSON.stringify(bodyParameters));
+                this.$root.setUrl(url, bodyParameters);
             }
         },
         clearForm: function() {
@@ -705,13 +835,31 @@ Vue.component('form-list', {
 /* ========== form field widget components ========== */
 Vue.component('date-time', {
     props: { id:String, name:{type:String,required:true}, value:String, type:{type:String,'default':'date-time'},
-        size:String, format:String, tooltip:String, form:String },
+        size:String, format:String, tooltip:String, form:String, required:String, autoYear:String },
     template:
     '<input v-if="type==\'time\'" type="text" class="form-control" :pattern="timePattern" :name="name" :value="value" :size="sizeVal" :data-toggle="{tooltip:(tooltip&&tooltip.length>0)}" :title="tooltip" :form="form">' +
     '<div v-else class="input-group date" :id="id">' +
-        '<input type="text" class="form-control" :name="name" :value="value" :size="sizeVal" :data-toggle="{tooltip:(tooltip&&tooltip.length>0)}" :title="tooltip" :form="form">' +
+        '<input ref="dateInput" @focus="focusDate" @blur="blurDate" type="text" class="form-control" :name="name" :value="value" :size="sizeVal" :data-toggle="{tooltip:(tooltip&&tooltip.length>0)}" :title="tooltip" :form="form" :required="required == \'required\' ? true : false">' +
         '<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>' +
     '</div>',
+    methods: {
+        focusDate: function() {
+            if (this.type === 'time' || this.autoYear === 'false') return;
+            var inputEl = $(this.$refs.dateInput); var curVal = inputEl.val();
+            if (!curVal || !curVal.length) inputEl.val(new Date().getFullYear());
+        },
+        blurDate: function() {
+            if (this.type === 'time') return;
+            var inputEl = $(this.$refs.dateInput); var curVal = inputEl.val();
+            // console.log("date/time unfocus val " + curVal);
+            // if contains 'd ' (month/day missing, or month specified but date missing or partial) clear input
+            // Sufficient to check for just 'd', since the mask handles any scenario where there would only be a single 'd'
+            if (curVal.indexOf('d') > 0) { inputEl.val(''); inputEl.trigger("change"); return; }
+            // default time to noon, or minutes to 00
+            if (curVal.indexOf('hh:mm') > 0) { inputEl.val(curVal.replace('hh:mm', '12:00')); inputEl.trigger("change"); return; }
+            if (curVal.indexOf(':mm') > 0) { inputEl.val(curVal.replace(':mm', ':00')); inputEl.trigger("change"); return; }
+        }
+    },
     computed: {
         formatVal: function() { var format = this.format; if (format && format.length > 0) { return format; }
             return this.type === 'time' ? 'HH:mm' : (this.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm'); },
@@ -725,42 +873,50 @@ Vue.component('date-time', {
         var value = this.value;
         var format = this.formatVal;
         var jqEl = $(this.$el);
-        if (this.type !== "time") { jqEl.datetimepicker({toolbarPlacement:'top', showClose:true, showClear:true, showTodayButton:true, useStrict:true,
-            defaultDate:(value && value.length ? moment(value,this.formatVal) : null), format:format, extraFormats:this.extraFormatsVal, stepping:5, locale:this.$root.locale}); }
-        if (format === "YYYY-MM-DD") { jqEl.find('input').inputmask("yyyy-mm-dd", { clearIncomplete:false, clearMaskOnLostFocus:true, showMaskOnFocus:true, showMaskOnHover:false, removeMaskOnSubmit:true }); }
-        if (format === "YYYY-MM-DD HH:mm") { jqEl.find('input').inputmask("yyyy-mm-dd hh:mm", { clearIncomplete:false, clearMaskOnLostFocus:true, showMaskOnFocus:true, showMaskOnHover:false, removeMaskOnSubmit:true }); }
+        if (this.type !== "time") {
+            jqEl.datetimepicker({toolbarPlacement:'top', debug:false, showClose:true, showClear:true, showTodayButton:true, useStrict:true,
+                defaultDate:(value && value.length ? moment(value,this.formatVal) : null), format:format,
+                extraFormats:this.extraFormatsVal, stepping:5, locale:this.$root.locale,
+                keyBinds: {t: function() {this.date(moment());}}});
+            jqEl.on("dp.change", function() { jqEl.val(jqEl.find("input").first().val()); jqEl.trigger("change"); })
+            jqEl.val(jqEl.find("input").first().val());
+        }
+        if (format === "YYYY-MM-DD") { jqEl.find('input').inputmask("yyyy-mm-dd", { clearIncomplete:false, clearMaskOnLostFocus:true, showMaskOnFocus:true, showMaskOnHover:false, removeMaskOnSubmit:false }); }
+        if (format === "YYYY-MM-DD HH:mm") { jqEl.find('input').inputmask("yyyy-mm-dd hh:mm", { clearIncomplete:false, clearMaskOnLostFocus:true, showMaskOnFocus:true, showMaskOnHover:false, removeMaskOnSubmit:false }); }
     }
 });
 moqui.dateOffsets = [{id:'0',text:'This'},{id:'-1',text:'Last'},{id:'1',text:'Next'},
-    {id:'-2',text:'-2'},{id:'2',text:'+2'},{id:'-3',text:'-3'},{id:'3',text:'+3'}];
-moqui.datePeriods = [{id:'day',text:'Day'},{id:'7d',text:'7 Days'},{id:'30d',text:'30 Days'},{id:'week',text:'Week'},
-    {id:'month',text:'Month'},{id:'quarter',text:'Quarter'},{id:'year',text:'Year'},{id:'7r',text:'+/-7d'},{id:'30r',text:'+/-30d'}];
+    {id:'-2',text:'-2'},{id:'2',text:'+2'},{id:'-3',text:'-3'},{id:'-4',text:'-4'},{id:'-6',text:'-6'},{id:'-12',text:'-12'}];
+moqui.datePeriods = [{id:'day',text:'Day'},{id:'7d',text:'7 Days'},{id:'30d',text:'30 Days'},{id:'week',text:'Week'},{id:'weeks',text:'Weeks'},
+    {id:'month',text:'Month'},{id:'months',text:'Months'},{id:'quarter',text:'Quarter'},{id:'year',text:'Year'},{id:'7r',text:'+/-7d'},{id:'30r',text:'+/-30d'}];
 moqui.emptyOpt = {id:'',text:'\u00a0'};
 Vue.component('date-period', {
-    props: { name:{type:String,required:true}, id:String, allowEmpty:Boolean, offset:String, period:String, date:String, form:String },
-    template: '<div class="date-period" :id="id"><select ref="poffset" :name="name+\'_poffset\'" :form="form"></select> ' +
-        '<select ref="period" :name="name+\'_period\'" :form="form"></select> ' +
-        '<date-time :name="name+\'_pdate\'" :id="id+\'_pdate\'" :form="form" type="date" :value="date"/></div>',
-    mounted: function() {
-        var pofsEl = $(this.$refs.poffset); var perEl = $(this.$refs.period);
-        var offsets = moqui.dateOffsets.slice(); var periods = moqui.datePeriods.slice();
-        if (this.allowEmpty) { offsets.unshift(moqui.emptyOpt); periods.unshift(moqui.emptyOpt); }
-        pofsEl.select2({ data:offsets }); perEl.select2({ data:periods });
-        var offset = this.offset; if (offset && offset.length) { pofsEl.val(offset).trigger('change'); }
-        var period = this.period; if (period && period.length) { perEl.val(period).trigger('change'); }
-    }
+    props: { name:{type:String,required:true}, id:String, allowEmpty:Boolean, offset:String, period:String, date:String, fromDate:String, thruDate:String, form:String },
+    data: function() { return { fromThruMode:false, dateOffsets:moqui.dateOffsets.slice(), datePeriods:moqui.datePeriods.slice() } },
+    template:
+    '<div v-if="fromThruMode"><date-time :name="name+\'_from\'" :id="id+\'_from\'" :form="form" type="date" :value="fromDate"/> - ' +
+        '<date-time :name="name+\'_thru\'" :id="id+\'_thru\'" :form="form" type="date" :value="thruDate"/>' +
+        ' <i @click="toggleMode" class="glyphicon glyphicon-resize-vertical"></i></div>' +
+    '<div v-else class="date-period" :id="id">' +
+        '<drop-down :name="name+\'_poffset\'" :options="dateOffsets" :value="offset" :allow-empty="allowEmpty" :form="form"></drop-down> ' +
+        '<drop-down :name="name+\'_period\'" :options="datePeriods" :value="period" :allow-empty="allowEmpty" :form="form"></drop-down> ' +
+        '<date-time :name="name+\'_pdate\'" :id="id+\'_pdate\'" :form="form" type="date" :value="date"/>' +
+        ' <i @click="toggleMode" class="glyphicon glyphicon-resize-horizontal"></i></div>',
+    methods: { toggleMode: function() { this.fromThruMode = !this.fromThruMode; } },
+    beforeMount: function() { if (((this.fromDate && this.fromDate.length) || (this.thruDate && this.thruDate.length))) this.fromThruMode = true; }
 });
 Vue.component('drop-down', {
     props: { options:Array, value:[Array,String], combo:Boolean, allowEmpty:Boolean, multiple:String, optionsUrl:String,
         serverSearch:{type:Boolean,'default':false}, serverDelay:{type:Number,'default':300}, serverMinLength:{type:Number,'default':1},
-        optionsParameters:Object, labelField:String, valueField:String, dependsOn:Object, dependsOptional:Boolean, form:String },
+        optionsParameters:Object, labelField:String, valueField:String, dependsOn:Object, dependsOptional:Boolean,
+        optionsLoadInit:Boolean, form:String },
     data: function() { return { curData:null, s2Opts:null, lastVal:null } },
     template: '<select :form="form"><slot></slot></select>',
     methods: {
-        processOptionList: function(list, page) {
+        processOptionList: function(list, page, term) {
             var newData = [];
             // funny case where select2 specifies no option.@value if empty so &nbsp; ends up passed with form submit; now filtered on server for \u00a0 only and set to null
-            if (this.allowEmpty && (!page || page <= 1)) newData.push({ id:'\u00a0', text:'\u00a0' });
+            if (this.allowEmpty && (!page || page <= 1) && (!term || term.trim() === '')) newData.push({ id:'\u00a0', text:'\u00a0' });
             var labelField = this.labelField; if (!labelField) { labelField = "label"; }
             var valueField = this.valueField; if (!valueField) { valueField = "value"; }
             $.each(list, function(idx, curObj) {
@@ -785,11 +941,11 @@ Vue.component('drop-down', {
         },
         processResponse: function(data, params) {
             if (moqui.isArray(data)) {
-                return { results:this.processOptionList(data) };
+                return { results:this.processOptionList(data, null, params.term) };
             } else {
                 params.page = params.page || 1; // NOTE: 1 based index, is 0 based on server side
                 var pageSize = data.pageSize || 20;
-                return { results: this.processOptionList(data.options, params.page),
+                return { results: this.processOptionList(data.options, params.page, params.term),
                     pagination: { more: (data.count ? (params.page * pageSize) < data.count : false) } };
             }
         },
@@ -801,7 +957,7 @@ Vue.component('drop-down', {
             $.ajax({ type:"POST", url:this.optionsUrl, data:reqData, dataType:"json", headers:{Accept:'application/json'},
                 error:moqui.handleAjaxError, success: function(data) {
                     var list = moqui.isArray(data) ? data : data.options;
-                    if (list) { vm.curData = vm.processOptionList(list); }
+                    if (list) { vm.curData = vm.processOptionList(list, null, (params ? params.term : null)); }
                 }});
         }
     },
@@ -814,7 +970,10 @@ Vue.component('drop-down', {
             jqEl.css("min-width", "240px"); // this gets ignored, not sure why select2 isn't passing it through
             jqEl.addClass("noResetSelect2"); // so doesn't get reset on container dialog load
         }
-        if (this.options && this.options.length > 0) { opts.data = this.options; }
+        if (this.options && this.options.length > 0) {
+            if (this.allowEmpty && this.multiple !== "multiple") opts.data = [{id:'',text:'\u00a0'}].concat(this.options);
+            else opts.data = this.options;
+        }
         if (this.serverSearch) {
             if (!this.optionsUrl) console.error("drop-down in form " + this.form + " has no options-url but has server-search=true");
             opts.ajax = { url:this.optionsUrl, type:"POST", dataType:"json", delay:this.serverDelay, cache:true,
@@ -836,8 +995,10 @@ Vue.component('drop-down', {
             for (var doParm in dependsOnMap) { if (dependsOnMap.hasOwnProperty(doParm)) {
                 $('#' + dependsOnMap[doParm]).on('change', function() { vm.populateFromUrl({term:initValue}); }); }}
             // do initial populate if not a serverSearch or for serverSearch if we have an initial value do the search so we don't display the ID
-            if (!this.serverSearch) { this.populateFromUrl(); }
-            else if (initValue && initValue.length && moqui.isString(initValue)) { this.populateFromUrl({term:initValue}); }
+            if (this.optionsLoadInit) {
+                if (!this.serverSearch) { this.populateFromUrl(); }
+                else if (initValue && initValue.length && moqui.isString(initValue)) { this.populateFromUrl({term:initValue}); }
+            }
         }
     },
     computed: { curVal: { get: function() { return $(this.$el).select2().val(); },
@@ -847,10 +1008,12 @@ Vue.component('drop-down', {
         options: function(options) { this.curData = options; },
         curData: function(options) {
             var jqEl = $(this.$el); var vm = this;
+            var wasFocused = jqEl.next().hasClass('select2-container--focus');
             // save the lastVal if there is one to remember what was selected even if new options don't have it, just in case options change again
             var saveVal = jqEl.select2().val(); if (saveVal && saveVal.length > 1) this.lastVal = saveVal;
             jqEl.select2('destroy'); jqEl.empty();
             this.s2Opts.data = options; jqEl.select2(this.s2Opts);
+            if (wasFocused) jqEl.focus();
             setTimeout(function() {
                 var setVal = vm.lastVal; if (!setVal || setVal.length < 2) { setVal = vm.value; }
                 if (setVal) {
@@ -957,13 +1120,27 @@ Vue.component('subscreens-active', {
         var newPath = curPathList[pathIndex];
         var pathChanged = (this.pathName !== newPath);
         this.pathName = newPath;
-        if (!newPath || newPath.length === 0) { this.activeComponent = moqui.EmptyComponent; return true; }
+        if (!newPath || newPath.length === 0) {
+            console.info("in subscreens-active newPath is empty, loading EmptyComponent and returning true");
+            this.activeComponent = moqui.EmptyComponent;
+            return true;
+        }
         var fullPath = root.basePath + '/' + curPathList.slice(0, pathIndex + 1).join('/');
-        if (!pathChanged && moqui.componentCache.containsKey(fullPath)) { return false; } // no need to reload component
+        if (!pathChanged && moqui.componentCache.containsKey(fullPath)) {
+            // no need to reload component
+            // console.info("in subscreens-active returning false because pathChanged is false and componentCache contains " + fullPath);
+            return false;
+        }
         var urlInfo = { path:fullPath };
         if (pathIndex === (curPathList.length - 1)) {
-            var extra = root.extraPathList; if (extra && extra.length > 0) { urlInfo.extraPath = extra.join('/'); } }
-        var search = root.currentSearch; if (search && search.length > 0) { urlInfo.search = search; }
+            var extra = root.extraPathList;
+            if (extra && extra.length > 0) { urlInfo.extraPath = extra.join('/'); }
+        }
+        var search = root.currentSearch;
+        if (search && search.length > 0) { urlInfo.search = search; }
+        urlInfo.bodyParameters = root.bodyParameters;
+        var navMenuItem = root.navMenuList[pathIndex + root.basePathSize];
+        if (navMenuItem && navMenuItem.renderModes) urlInfo.renderModes = navMenuItem.renderModes;
         console.info('subscreens-active loadActive pathIndex ' + pathIndex + ' pathName ' + vm.pathName + ' urlInfo ' + JSON.stringify(urlInfo));
         root.loading++;
         moqui.loadComponent(urlInfo, function(comp) { vm.activeComponent = comp; root.loading--; });
@@ -973,17 +1150,56 @@ Vue.component('subscreens-active', {
 });
 moqui.webrootVue = new Vue({
     el: '#apps-root',
-    data: { basePath:"", linkBasePath:"", currentPathList:[], extraPathList:[], activeSubscreens:[], currentParameters:{},
+    data: { basePath:"", linkBasePath:"", currentPathList:[], extraPathList:[], activeSubscreens:[], currentParameters:{}, bodyParameters:null,
         navMenuList:[], navHistoryList:[], navPlugins:[], notifyHistoryList:[], lastNavTime:Date.now(), loading:0, activeContainers:{},
         moquiSessionToken:"", appHost:"", appRootPath:"", userId:"", locale:"en", notificationClient:null },
     methods: {
-        setUrl: function(url) {
-            // make sure any open modals are closed before setting currentUrl
+        setUrl: function(url, bodyParameters) {
+            // always set bodyParameters, setting to null when not specified to clear out previous
+            this.bodyParameters = bodyParameters;
+            // make sure any open modals are closed before setting current URL
             $('.modal.in').modal('hide');
-            if (url.indexOf(this.basePath) === 0) url = url.replace(this.basePath, this.linkBasePath);
+            url = this.getLinkPath(url);
             // console.info('setting url ' + url + ', cur ' + this.currentLinkUrl);
-            if (this.currentLinkUrl === url) { this.reloadSubscreens(); /* console.info('reloading, same url ' + url); */ }
-            else { this.currentUrl = url; window.history.pushState(null, this.ScreenTitle, url); }
+            if (this.currentLinkUrl === url && url !== this.linkBasePath) {
+                this.reloadSubscreens(); /* console.info('reloading, same url ' + url); */
+            } else {
+                var href = url;
+                var ssIdx = href.indexOf('://');
+                if (ssIdx >= 0) {
+                    var slIdx = href.indexOf('/', ssIdx + 3);
+                    if (slIdx === -1) return;
+                    href = href.slice(slIdx);
+                }
+                var splitHref = href.split("?");
+                // clear out extra path, to be set from nav menu data if needed
+                this.extraPathList = [];
+                // set currentSearch before currentPath so that it is available when path updates
+                if (splitHref.length > 1 && splitHref[1].length > 0) { this.currentSearch = splitHref[1]; } else { this.currentSearch = ""; }
+                this.currentPath = splitHref[0];
+                // with url cleaned up through setters now get current screen url for menu
+                var srch = this.currentSearch;
+                var screenUrl = this.currentPath + (srch.length > 0 ? '?' + srch : '');
+                if (!screenUrl || screenUrl.length === 0) return;
+                console.info("current URL changing to " + screenUrl);
+                this.lastNavTime = Date.now();
+                // TODO: somehow only clear out activeContainers that are in subscreens actually reloaded? may cause issues if any but last screen have dynamic-container
+                this.activeContainers = {};
+
+                // update menu, which triggers update of screen/subscreen components
+                var vm = this;
+                var menuDataUrl = this.appRootPath && this.appRootPath.length && screenUrl.indexOf(this.appRootPath) === 0 ?
+                    this.appRootPath + "/menuData" + screenUrl.slice(this.appRootPath.length) : "/menuData" + screenUrl;
+                $.ajax({ type:"GET", url:menuDataUrl, dataType:"text", error:moqui.handleAjaxError, success: function(outerListText) {
+                    var outerList = null;
+                    // console.log("menu response " + outerListText);
+                    try { outerList = JSON.parse(outerListText); } catch (e) { console.info("Error parson menu list JSON: " + e); }
+                    if (outerList && moqui.isArray(outerList)) { vm.navMenuList = outerList; /* console.info('navMenuList ' + JSON.stringify(outerList)); */ }
+                }});
+
+                // set the window URL
+                window.history.pushState(null, this.ScreenTitle, url);
+            }
         },
         setParameters: function(parmObj) {
             if (parmObj) { this.$root.currentParameters = $.extend({}, this.$root.currentParameters, parmObj); }
@@ -1000,6 +1216,7 @@ moqui.webrootVue = new Vue({
         reloadSubscreens: function() {
             // console.info('reloadSubscreens currentParameters ' + JSON.stringify(this.currentParameters) + ' currentSearch ' + this.currentSearch);
             var fullPathList = this.currentPathList; var activeSubscreens = this.activeSubscreens;
+            console.info("reloadSubscreens currentPathList " + JSON.stringify(this.currentPathList));
             if (fullPathList.length === 0 && activeSubscreens.length > 0) { activeSubscreens.splice(1); activeSubscreens[0].loadActive(); return; }
             for (var i=0; i<activeSubscreens.length; i++) {
                 if (i >= fullPathList.length) break;
@@ -1009,27 +1226,35 @@ moqui.webrootVue = new Vue({
                 if (loaded) activeSubscreens.splice(i+1);
             }
         },
+        goPreviousScreen: function() {
+            var currentPath = this.currentPath;
+            var navHistoryList = this.navHistoryList;
+            var prevHist;
+            for (var hi = 0; hi < navHistoryList.length; hi++) {
+                if (navHistoryList[hi].pathWithParams.indexOf(currentPath) < 0) { prevHist = navHistoryList[hi]; break; } }
+            if (prevHist && prevHist.pathWithParams && prevHist.pathWithParams.length) this.setUrl(prevHist.pathWithParams)
+        },
         // all container components added with this must have reload() and load(url) methods
         addContainer: function(contId, comp) { this.activeContainers[contId] = comp; },
         reloadContainer: function(contId) { var contComp = this.activeContainers[contId];
             if (contComp) { contComp.reload(); } else { console.error("Container with ID " + contId + " not found, not reloading"); }},
         loadContainer: function(contId, url) { var contComp = this.activeContainers[contId];
             if (contComp) { contComp.load(url); } else { console.error("Container with ID " + contId + " not found, not loading url " + url); }},
-        addNavPlugin: function(url) { var vm = this; moqui.loadComponent(url, function(comp) { vm.navPlugins.push(comp); }) },
+        addNavPlugin: function(url) { var vm = this; moqui.loadComponent(this.appRootPath + url, function(comp) { vm.navPlugins.push(comp); }) },
         addNotify: function(message, type) {
             var histList = this.notifyHistoryList.slice(0);
             var nowDate = new Date();
             var nh = nowDate.getHours(); if (nh < 10) nh = '0' + nh;
             var nm = nowDate.getMinutes(); if (nm < 10) nm = '0' + nm;
-            var ns = nowDate.getSeconds(); if (ns < 10) ns = '0' + ns;
-            histList.unshift({message:message, type:type, time:(nh + ':' + nm + ':' + ns)});
+            // var ns = nowDate.getSeconds(); if (ns < 10) ns = '0' + ns;
+            histList.unshift({message:message, type:type, time:(nh + ':' + nm)}); //  + ':' + ns
             while (histList.length > 25) { histList.pop(); }
             this.notifyHistoryList = histList;
         },
         switchDarkLight: function() {
             var jqBody = $("body"); jqBody.toggleClass("bg-dark"); jqBody.toggleClass("bg-light");
             var currentStyle = jqBody.hasClass("bg-dark") ? "bg-dark" : "bg-light";
-            $.ajax({ type:'POST', url:'/apps/setPreference', error:moqui.handleAjaxError,
+            $.ajax({ type:'POST', url:(this.appRootPath + '/apps/setPreference'), error:moqui.handleAjaxError,
                 data:{ moquiSessionToken: this.moquiSessionToken, preferenceKey:'OUTER_STYLE', preferenceValue:currentStyle } });
         },
         showScreenDocDialog: function(docIndex) {
@@ -1043,11 +1268,16 @@ moqui.webrootVue = new Vue({
             if (navMenu.extraPathList && navMenu.extraPathList.length) {
                 var href = navMenu.path + '/' + navMenu.extraPathList.join('/');
                 var questionIdx = navMenu.pathWithParams.indexOf("?");
-                if (questionIdx > 0) { href += navMenu.pathWithParams.slice(questionIdx + 1); }
+                if (questionIdx > 0) { href += navMenu.pathWithParams.slice(questionIdx); }
                 return href;
             } else {
                 return navMenu.pathWithParams;
             }
+        },
+        getLinkPath: function(path) {
+            if (this.appRootPath && this.appRootPath.length && path.indexOf(this.appRootPath) !== 0) path = this.appRootPath + path;
+            if (path.indexOf(this.basePath) === 0) path = path.replace(this.basePath, this.linkBasePath);
+            return path;
         }
     },
     watch: {
@@ -1057,9 +1287,10 @@ moqui.webrootVue = new Vue({
             // if there is an extraPathList set it now
             if (cur.extraPathList) this.extraPathList = cur.extraPathList;
             // make sure full currentPathList and activeSubscreens is populated (necessary for minimal path urls)
-            var basePathSize = this.basePath.split('/').length;
-            var fullPathList = cur.path.split('/').slice(basePathSize);
-            console.info('nav updated fullPath ' + JSON.stringify(fullPathList) + ' currentPathList ' + JSON.stringify(this.currentPathList));
+            // fullPathList is the path after the base path, menu and link paths are in the screen tree context only so need to subtract off the appRootPath (Servlet Context Path)
+            var basePathSize = this.basePathSize;
+            var fullPathList = cur.path.split('/').slice(basePathSize + 1);
+            console.info('nav updated fullPath ' + JSON.stringify(fullPathList) + ' currentPathList ' + JSON.stringify(this.currentPathList) + ' cur.path ' + cur.path + ' basePathSize ' + basePathSize);
             this.currentPathList = fullPathList;
             this.reloadSubscreens();
 
@@ -1067,21 +1298,25 @@ moqui.webrootVue = new Vue({
             var newTitle = (par ? par.title + ' - ' : '') + cur.title;
             var curUrl = cur.pathWithParams; var questIdx = curUrl.indexOf("?");
             if (questIdx > 0) {
+                var excludeKeys = ["pageIndex", "orderBySelect", "orderByField", "moquiSessionToken"];
                 var parmList = curUrl.substring(questIdx+1).split("&");
                 curUrl = curUrl.substring(0, questIdx);
                 var dpCount = 0;
                 var titleParms = "";
                 for (var pi=0; pi<parmList.length; pi++) {
-                    var parm = parmList[pi]; if (parm.indexOf("pageIndex=") === 0) continue;
+                    var parm = parmList[pi];
                     if (curUrl.indexOf("?") === -1) { curUrl += "?"; } else { curUrl += "&"; }
                     curUrl += parm;
-                    if (dpCount > 1) continue; // add up to 2 parms to the title
+                    // from here down only add to title parms
+                    if (dpCount > 3) continue; // add up to 4 parms to the title
                     var eqIdx = parm.indexOf("=");
                     if (eqIdx > 0) {
                         var key = parm.substring(0, eqIdx);
-                        if (key.indexOf("_op") > 0 || key.indexOf("_not") > 0 || key.indexOf("_ic") > 0 || key === "moquiSessionToken") continue;
+                        var value = parm.substring(eqIdx + 1);
+                        if (key.indexOf("_op") > 0 || key.indexOf("_not") > 0 || key.indexOf("_ic") > 0 || excludeKeys.indexOf(key) > 0 || key === value) continue;
                         if (titleParms.length > 0) titleParms += ", ";
-                        titleParms += decodeURIComponent(parm.substring(eqIdx + 1));
+                        titleParms += decodeURIComponent(value);
+                        dpCount++;
                     }
                 }
                 if (titleParms.length > 0) {
@@ -1113,43 +1348,19 @@ moqui.webrootVue = new Vue({
                 if (newPath.indexOf(this.linkBasePath) === 0) { newPath = newPath.slice(this.linkBasePath.length + 1); }
                 else if (newPath.indexOf(this.basePath) === 0) { newPath = newPath.slice(this.basePath.length + 1); }
                 this.currentPathList = newPath.split('/');
-            }},
-        currentLinkPath: function() { var curPath = this.currentPathList; var extraPath = this.extraPathList;
+            }
+        },
+        currentLinkPath: function() {
+            var curPath = this.currentPathList; var extraPath = this.extraPathList;
             return this.linkBasePath + (curPath && curPath.length > 0 ? '/' + curPath.join('/') : '') +
-                (extraPath && extraPath.length > 0 ? '/' + extraPath.join('/') : ''); },
+                (extraPath && extraPath.length > 0 ? '/' + extraPath.join('/') : '');
+        },
         currentSearch: {
             get: function() { return moqui.objToSearch(this.currentParameters); },
             set: function(newSearch) { this.currentParameters = moqui.searchToObj(newSearch); }
         },
-        currentUrl: {
-            get: function() { var srch = this.currentSearch; return this.currentPath + (srch.length > 0 ? '?' + srch : ''); },
-            set: function(href) {
-                var ssIdx = href.indexOf('//');
-                if (ssIdx >= 0) { var slIdx = href.indexOf('/', ssIdx + 1); if (slIdx === -1) { return; } href = href.slice(slIdx); }
-                var splitHref = href.split("?");
-                // clear out extra path, to be set from nav menu data if needed
-                this.extraPathList = [];
-                // set currentSearch before currentPath so that it is available when path updates
-                if (splitHref.length > 1 && splitHref[1].length > 0) { this.currentSearch = splitHref[1]; } else { this.currentSearch = ""; }
-                this.currentPath = splitHref[0];
-                // with url cleaned up through setters now get current screen url for menu
-                var screenUrl = this.currentUrl;
-                if (!screenUrl || screenUrl.length === 0) return;
-                console.info("currentUrl changing to " + screenUrl);
-                this.lastNavTime = Date.now();
-                // TODO: somehow only clear out activeContainers that are in subscreens actually reloaded? may cause issues if any but last screen have dynamic-container
-                this.activeContainers = {};
-                // update menu, which triggers update of screen/subscreen components
-                var vm = this;
-                $.ajax({ type:"GET", url:"/menuData" + screenUrl, dataType:"text", error:moqui.handleAjaxError, success: function(outerListText) {
-                    var outerList = null;
-                    // console.log("menu response " + outerListText);
-                    try { outerList = JSON.parse(outerListText); } catch (e) { console.info("Error parson menu list JSON: " + e); }
-                    if (outerList && moqui.isArray(outerList)) { vm.navMenuList = outerList; /* console.info('navMenuList ' + JSON.stringify(outerList)); */ }
-                }});
-            }
-        },
         currentLinkUrl: function() { var srch = this.currentSearch; return this.currentLinkPath + (srch.length > 0 ? '?' + srch : ''); },
+        basePathSize: function() { return this.basePath.split('/').length - this.appRootPath.split('/').length; },
         ScreenTitle: function() { return this.navMenuList.length > 0 ? this.navMenuList[this.navMenuList.length - 1].title : ""; }
     },
     created: function() {
@@ -1168,11 +1379,24 @@ moqui.webrootVue = new Vue({
         jqEl.find('#notify-history-menu-link').tooltip({ placement:'bottom', trigger:'hover' });
         jqEl.find('#document-menu-link').tooltip({ placement:'bottom', trigger:'hover' });
         // load the current screen
-        this.currentUrl = window.location.pathname + window.location.search;
+        this.setUrl(window.location.pathname + window.location.search);
         // init the NotificationClient and register 'displayNotify' as the default listener
         this.notificationClient.registerListener("ALL");
 
-        $("#screen-document-dialog").on("hidden.bs.modal", function () { var jqEl = $("#screen-document-dialog-body"); jqEl.empty(); jqEl.append('<div class="spinner"><div>Loading…</div></div>'); });
+        $("#screen-document-dialog").on("hidden.bs.modal", function () { var jqEl = $("#screen-document-dialog-body");
+                jqEl.empty(); jqEl.append('<div class="spinner"><div>Loading…</div></div>'); });
+
+        // request Notification permission on load if not already granted or denied
+        if (window.Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission(function (status) {
+                if (status === "granted") {
+                    moqui.notifyMessages("Browser notifications enabled, if you don't want them use browser notification settings to block");
+                } else if (status === "denied") {
+                    moqui.notifyMessages("Browser notifications disabled, if you want them use browser notification settings to allow");
+                }
+            });
+        }
     }
+
 });
 window.addEventListener('popstate', function() { moqui.webrootVue.setUrl(window.location.pathname + window.location.search); });

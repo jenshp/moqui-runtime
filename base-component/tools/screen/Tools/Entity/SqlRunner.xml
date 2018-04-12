@@ -15,54 +15,76 @@ along with this software (see the LICENSE.md file). If not, see
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
         default-menu-title="SQL" begin-transaction="false"><!-- NOTE: begin tx is false so table meta data changes, etc can be done -->
 
-    <pre-actions>
+    <actions>
         <script><![CDATA[
             import java.sql.Connection
             import java.sql.ResultSet
+            import java.sql.SQLWarning
             import org.moqui.context.ExecutionContext
 
             ExecutionContext ec = context.ec
 
-            rs = null
-            columns = new ArrayList<String>()
-            records = new ArrayList<ArrayList>()
+            def rs = null
+            allColumns = new ArrayList<ArrayList<String>>()
+            allRecords = new ArrayList<ArrayList<ArrayList>>()
 
             int limitInt = (limit?:"500") as int
 
+            // make sure SQL comes in secure parameter (body, etc no URL)
+            sql = ec.web.secureRequestParameters.get("sql")
             if (sql && groupName) {
                 messageList = []
                 Connection con = ec.entity.getConnection(groupName)
                 try {
-                    if (sql.toUpperCase().startsWith("SELECT")) {
-                        stmt = con.createStatement()
-                        rs = stmt.executeQuery(sql as String)
-                        if (rs != null) {
-                            rsmd = rs.getMetaData()
-                            columnCount = rsmd.getColumnCount()
-                            for (i = 1; i <= columnCount; i++) columns.add(rsmd.getColumnName(i))
+                    stmt = con.createStatement()
 
-                            limitReached = false
-                            while (rs.next()) {
-                                if (limitInt > 0 && records.size() >= limitInt) {
-                                    limitReached = true
-                                    break
-                                }
-                                record = new ArrayList<Object>(columnCount)
-                                for (i = 1; i <= columnCount; i++) record.add(rs.getObject(i))
-                                records.add(record)
-                            }
-                            rs.close()
+                    for(int i=0; i< 100; i++) {
+                        // try get 100 resultsets, avoid infinit loop
+                        boolean isResultSet = i == 0 ? stmt.execute(sql as String) : stmt.getMoreResults()
+                        ec.logger.info("$isResultSet")
 
-                            if (limitReached) {
-                                messageList.add(ec.resource.expand('Only showing first ${limit} rows.',''))
-                            } else {
-                                messageList.add(ec.resource.expand('Showing all ${records.size()} results.',''))
-                            }
+                        SQLWarning w = stmt.getWarnings()
+                        for (int j = 0; j < 100 && w != null; j++) {
+                            ec.logger.warn(w.getMessage() as String)
+                            w = w.getNextWarning()
                         }
-                    } else {
-                        stmt = con.createStatement()
-                        rowsAffected = stmt.executeUpdate(sql as String)
-                        messageList.add(ec.resource.expand('Query altered ${rowsAffected} rows.',''))
+
+                        stmt.clearWarnings()
+
+                        if (isResultSet) {
+                            columns = new ArrayList<String>()
+                            records = new ArrayList<ArrayList>()
+                            allColumns.add(columns)
+                            allRecords.add(records)
+                            rs = stmt.getResultSet()
+                            if (rs != null) {
+                                rsmd = rs.getMetaData()
+                                columnCount = rsmd.getColumnCount()
+                                for (i = 1; i <= columnCount; i++) columns.add(rsmd.getColumnName(i))
+
+                                limitReached = false
+                                while (rs.next()) {
+                                    if (limitInt > 0 && records.size() >= limitInt) {
+                                        limitReached = true
+                                        break
+                                    }
+                                    record = new ArrayList<Object>(columnCount)
+                                    for (i = 1; i <= columnCount; i++) record.add(rs.getObject(i))
+                                    records.add(record)
+                                }
+                                rs.close()
+
+                                if (limitReached) {
+                                    messageList.add(ec.resource.expand('Only showing first ${limit} rows.',''))
+                                } else {
+                                    messageList.add(ec.resource.expand('Showing all ${records.size()} results.',''))
+                                }
+                            }
+                        } else if ((rowsAffected = stmt.getUpdateCount()) != -1){
+                            messageList.add(ec.resource.expand('Query altered ${rowsAffected} rows.',''))
+                        } else {
+                            break
+                        }
                     }
                 } catch (Exception e) {
                     messageList.add(e.toString())
@@ -72,12 +94,12 @@ along with this software (see the LICENSE.md file). If not, see
                 }
             }
         ]]></script>
-    </pre-actions>
+    </actions>
     <widgets>
         <section-iterate name="Messages" list="messageList" entry="message"><widgets>
             <label text="${message}" type="p" style="text-info"/>
         </widgets></section-iterate>
-        <form-single name="SqlOptions" transition=".">
+        <form-single name="SqlOptions" transition="." body-parameters="sql">
             <field name="groupName"><default-field><drop-down no-current-selected-key="transactional">
                 <list-options list="ec.entity.getDatasourceGroupNames()"/></drop-down></default-field></field>
             <field name="sql"><default-field title="SQL Statement"><text-area cols="120" rows="8"/></default-field></field>
@@ -87,16 +109,22 @@ along with this software (see the LICENSE.md file). If not, see
 
         <label text="Query Results" type="h4"/>
         <render-mode><text type="html,vuet"><![CDATA[
-            <div>
-            <#if columns?has_content>
-                <table class="table table-striped table-hover">
-                    <tr class="header-row"><#list columns as column><td>${column}</td></#list></tr>
-                    <#if records?has_content><#list records as record>
-                        <tr><#list record as curField><td>${ec.l10n.format(curField, '')!"&nbsp;"}</td></#list></tr>
-                    </#list></#if>
-                </table>
+            <#if allColumns?has_content>
+                <#list allColumns as columns>
+                    <#assign records = allRecords[columns?index] />
+                    <div style="margin-bottom: 2em;">
+                    <h3>Result: ${columns?index + 1}</h3>
+                    <#if columns?has_content>
+                        <table class="table table-striped table-hover">
+                            <tr class="header-row"><#list columns as column><td>${column}</td></#list></tr>
+                            <#if records?has_content><#list records as record>
+                                <tr><#list record as curField><td>${ec.l10n.format(curField, '')!"&nbsp;"}</td></#list></tr>
+                            </#list></#if>
+                        </table>
+                    </#if>
+                    </div>
+                </#list>
             </#if>
-            </div>
         ]]></text></render-mode>
     </widgets>
 </screen>
