@@ -39,7 +39,9 @@ along with this software (see the LICENSE.md file). If not, see
     </script></pre-actions>
     <widgets>
         <!-- NOTE: this screen is not under the apps screen, but uses similar header/footer/etc -->
-        <container style="moitlogin"><image url-type="plain" url="${ec.web.getWebappRootUrl(false, null)}/moitstatic/moitTransparent.png" alt="Moit" style="moitloginlogo"/></container>
+        <container style="lynklogin"><image url-type="plain"
+                                         url="${ec.web.getWebappRootUrl(false, null)}/lynkstatic/LynkLogo.png"
+                                            alt="Lynk" style="lynkloginlogo"/></container>
         <container id="content" style="Login"><container style="inner"><container style="container-fluid">
             <section-iterate name="headerSavedMessages" list="ec.web?.savedMessages" entry="message"><widgets>
                 <render-mode><text type="html"><![CDATA[<div class="alert alert-success fade in" role="alert"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>]]></text></render-mode>
