@@ -39,7 +39,6 @@ along with this software (see the LICENSE.md file). If not, see
     </script></pre-actions>
     <widgets>
         <!-- NOTE: this screen is not under the apps screen, but uses similar header/footer/etc -->
-        <container style="moitlogin"><image url-type="plain" url="${ec.web.getWebappRootUrl(false, null)}/moitstatic/moitTransparent.png" alt="Moit" style="moitloginlogo"/></container>
         <container id="content" style="Login"><container style="inner"><container style="container-fluid">
             <section-iterate name="headerSavedMessages" list="ec.web?.savedMessages" entry="message"><widgets>
                 <render-mode><text type="html"><![CDATA[<div class="alert alert-success fade in" role="alert"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>]]></text></render-mode>
@@ -60,6 +59,7 @@ along with this software (see the LICENSE.md file). If not, see
 
             <!-- if there are no user accounts, other than the _NA_ UserAccount which is in seed data, show form to create admin account -->
             <section name="NeedsSetupSection" condition="ec.entity.find('moqui.security.UserAccount').disableAuthz().count() > 1"><widgets>
+                <container><image url-type="plain" url="/logostatic/logo.png" alt="Logo" style="loginlogo"/></container>
                 <render-mode><text type="html" template="true" location="component://webroot/screen/webroot/Login.ftl"/></render-mode>
             </widgets><fail-widgets>
                 <render-mode><text type="html"><![CDATA[
