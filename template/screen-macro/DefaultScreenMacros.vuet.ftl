@@ -379,6 +379,13 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         <#assign lastUpdatedString = sri.getNamedValuePlain("lastUpdatedStamp", formNode)>
         <#if lastUpdatedString?has_content><input type="hidden" name="lastUpdatedStamp" value="${lastUpdatedString}"></#if>
     </#if>
+    <#if formNode["@pass-through-parameters"]! == "true">
+        <#assign currentFindUrl = sri.getScreenUrlInstance().cloneUrlInstance().removeParameter("pageIndex").removeParameter("moquiFormName").removeParameter("moquiSessionToken").removeParameter("lastStandalone").removeParameter("formListFindId")>
+        <#assign currentFindUrlParms = currentFindUrl.getParameterMap()>
+        <#list currentFindUrlParms.keySet() as parmName><#if !formInstance.getFieldNode(parmName)??>
+            <input type="hidden" name="${parmName}" value="${currentFindUrlParms.get(parmName)!?html}">
+        </#if></#list>
+    </#if>
         <fieldset class="form-horizontal"<#if urlInstance.disableLink> disabled="disabled"</#if>>
         <#if formNode["field-layout"]?has_content>
             <#recurse formNode["field-layout"][0]/>
@@ -968,7 +975,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
                 <#assign curUrlInstance = sri.getCurrentScreenUrl()>
                 <form-link name="${headerFormId}" id="${headerFormId}" action="${curUrlInstance.path}">
                     <#list hiddenParameterKeys as hiddenParameterKey><input type="hidden" name="${hiddenParameterKey}" value="${hiddenParameterMap.get(hiddenParameterKey)!""}"></#list>
-                    <button id="quickClear_button" type="submit" name="clearParameters" style="float:left; padding: 0px 5px 0px 4px; margin-top: 1px;" class="btn btn-primary btn-sm"><i class="fa fa-remove"></i></button>
+                    <button id="${headerFormId}-quick-clear" type="submit" name="clearParameters" style="float:left; padding: 0 5px 0 5px; margin: 0 4px 0 0;" class="btn btn-primary btn-sm"><i class="fa fa-remove"></i></button>
                 </form-link>
             </#if>
         </th></tr>
@@ -1148,7 +1155,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         </#if>
 
         <#if !skipHeader><@paginationHeaderModals formListInfo formId isHeaderDialog/></#if>
-        <table class="table table-striped table-hover table-condensed${tableStyle}" id="${formId}_table">
+        <div class="table-scroll-wrapper"><table class="table table-striped table-hover table-condensed${tableStyle}" id="${formId}_table">
         <#if !skipHeader>
             <thead>
                 <@paginationHeader formListInfo formId isHeaderDialog/>
@@ -1269,7 +1276,7 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
         </#if>
         <#if !isServerStatic></tbody></#if>
         <#assign ownerForm = "">
-        </table>
+        </table></div>
     </#if>
     <#if formNode["@focus-field"]?has_content>
         <m-script>$("#${formId}_table").find('[name="${formNode["@focus-field"]}<#if isMulti && !formListInfo.hasFirstRow()>_0</#if>"][form="${formId}<#if formListInfo.hasFirstRow()>_first<#elseif !isMulti>_0</#if>"]').addClass('default-focus').focus();</m-script>
@@ -1475,8 +1482,9 @@ ${sri.renderIncludeScreen(.node["@location"], .node["@share-scope"]!)}
     <#assign fvFromDate = ec.getContext().get(curFieldName + "_from")!"">
     <#assign fvThruDate = ec.getContext().get(curFieldName + "_thru")!"">
     <#assign allowEmpty = .node["@allow-empty"]!"true">
-    <date-period name="${curFieldName}" id="${tlId}" :allow-empty="${allowEmpty}" offset="${fvOffset}" period="${fvPeriod}"
-         date="${fvDate}" from-date="${fvFromDate}" thru-date="${fvThruDate}"<#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>/>
+    <#if .node["@time"]! == "true"><#assign fromThruType = "date-time"><#else><#assign fromThruType = "date"></#if>
+    <date-period name="${curFieldName}" id="${tlId}" :allow-empty="${allowEmpty}" offset="${fvOffset}" period="${fvPeriod}" from-thru-type="${fromThruType}"
+         date="${fvDate}" from-date="${fvFromDate}" thru-date="${fvThruDate}" <#if .node?parent["@tooltip"]?has_content> data-toggle="tooltip" title="${ec.getResource().expand(.node?parent["@tooltip"], "")}"</#if><#if ownerForm?has_content> form="${ownerForm}"</#if>/>
 </#macro>
 
 <#--
@@ -1652,8 +1660,8 @@ a => A, d => D, y => Y
                 <#t><#if doNode["@min-length"]?has_content> :server-min-length="${doNode["@min-length"]}"</#if>
                 <#t><#if (.node?children?size > 1)> :options-load-init="true"</#if>
             <#t></#if>
-                :options="[<#if currentValue?has_content && !allowMultiple && !optionsHasCurrent>{id:'${currentValue}',text:'<#if currentDescription?has_content>${currentDescription?js_string}<#else>${currentValue}</#if>'},</#if><#rt>
-                    <#t><#list (options.keySet())! as key>{id:'<#if key?has_content>${key}<#else>\u00a0</#if>',text:'${options.get(key)?js_string}'}<#sep>,</#list>]"
+                :options="[<#if currentValue?has_content && !allowMultiple && !optionsHasCurrent>{id:'${Static["org.moqui.util.WebUtilities"].encodeHtmlJsSafe(currentValue)}',text:'<#if currentDescription?has_content>${Static["org.moqui.util.WebUtilities"].encodeHtmlJsSafe(currentDescription!)}<#else>${Static["org.moqui.util.WebUtilities"].encodeHtmlJsSafe(currentValue)}</#if>'},</#if><#rt>
+                    <#t><#list (options.keySet())! as key>{id:'<#if key?has_content>${Static["org.moqui.util.WebUtilities"].encodeHtmlJsSafe(key)}<#else>\u00a0</#if>',text:'${Static["org.moqui.util.WebUtilities"].encodeHtmlJsSafe(options.get(key)!)}'}<#sep>,</#list>]"
             <#lt>>
             <#-- support <#if .node["@current"]! == "first-in-list"> again? -->
     </drop-down>
