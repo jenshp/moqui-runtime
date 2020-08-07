@@ -41,6 +41,13 @@ along with this software (see the LICENSE.md file). If not, see
     <transition name="deleteAppInstanceVol"><service-call name="delete#moqui.server.instance.AppInstanceVolume"/>
         <default-response url="."/></transition>
 
+    <transition name="createAppInstanceHostConfig"><service-call name="create#moqui.server.instance.AppInstanceHostConfig"/>
+        <default-response url="."/></transition>
+    <transition name="updateAppInstanceHostConfig"><service-call name="update#moqui.server.instance.AppInstanceHostConfig"/>
+        <default-response url="."/></transition>
+    <transition name="deleteAppInstanceHostConfig"><service-call name="delete#moqui.server.instance.AppInstanceHostConfig"/>
+        <default-response url="."/></transition>
+
     <transition name="provisionAppInstance"><service-call name="org.moqui.impl.InstanceServices.provision#AppInstance"/>
         <default-response url="."/></transition>
     <transition name="createAppDatabase"><service-call name="org.moqui.impl.InstanceServices.create#AppDatabase"/>
@@ -60,6 +67,7 @@ along with this software (see the LICENSE.md file). If not, see
         <set field="envList" from="appInstance.envs"/>
         <set field="linkList" from="appInstance.links"/>
         <set field="volumeList" from="appInstance.vols"/>
+        <set field="hostConfigList" from="appInstance.hostConfigs"/>
 
         <service-call name="org.moqui.impl.InstanceServices.check#AppInstance" in-map="[appInstanceId:appInstanceId]" out-map="context"/>
         <service-call name="org.moqui.impl.InstanceServices.check#AppDatabase" in-map="[appInstanceId:appInstanceId]" out-map="context"/>
@@ -132,7 +140,7 @@ along with this software (see the LICENSE.md file). If not, see
                 </default-field></field>
                 <field name="instanceHostId"><default-field title="Instance Host">
                     <drop-down allow-empty="true">
-                        <entity-options key="${instanceHostId}" text="${typeDescription} ${hostAddress}">
+                        <entity-options key="${instanceHostId}" text="[${instanceHostId}] ${typeDescription} ${hostAddress}">
                             <entity-find entity-name="moqui.server.instance.InstanceHostDetail">
                                 <order-by field-name="typeDescription"/></entity-find>
                         </entity-options>
@@ -220,6 +228,31 @@ along with this software (see the LICENSE.md file). If not, see
                 <field name="deleteLink"><default-field title="">
                     <link url="deleteAppInstanceLink" text="X" parameter-map="[appInstanceId:appInstanceId, instanceName:instanceName]"
                           confirmation="Really delete link for ${instanceName}?"/>
+                </default-field></field>
+            </form-list>
+        </box-body-nopad></container-box>
+
+        <container-box><box-header title="Instance (Container) HostConfigs"/><box-toolbar>
+            <container-dialog id="AddHostConfigDialog" button-text="Add Host Config">
+                <form-single name="AddHostConfig" transition="createAppInstanceHostConfig">
+                    <field name="appInstanceId"><default-field><hidden/></default-field></field>
+                    <field name="hostConfigName"><default-field><text-line size="25"/></default-field></field>
+                    <field name="hostConfigValue"><default-field><text-line size="25"/></default-field></field>
+                    <field name="submitButton"><default-field title="Add Host Config"><submit/></default-field></field>
+                </form-single>
+            </container-dialog>
+        </box-toolbar><box-body>
+            <label text="After updating host configs the instance must be removed and re-initialized for them to take effect"/>
+        </box-body><box-body-nopad>
+            <form-list name="HostConfigList" list="hostConfigList" transition="updateAppInstanceHostConfig">
+                <field name="appInstanceId"><default-field><hidden/></default-field></field>
+                <field name="hostConfigName"><default-field><display/></default-field></field>
+                <field name="hostConfigValue"><default-field><text-line size="25"/></default-field></field>
+                <field name="type"><default-field><text-line size="10"/></default-field></field>
+                <field name="submitButton"><default-field title="Update"><submit/></default-field></field>
+                <field name="deleteLink"><default-field title="">
+                    <link url="deleteAppInstanceHostConfig" text="X" parameter-map="[appInstanceId:appInstanceId, hostConfigName:hostConfigName]"
+                          confirmation="Really delete hostConfig ${hostConfigName}?"/>
                 </default-field></field>
             </form-list>
         </box-body-nopad></container-box>
