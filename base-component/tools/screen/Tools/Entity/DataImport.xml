@@ -78,7 +78,7 @@ along with this software (see the LICENSE.md file). If not, see
 
             <field name="location"><default-field><text-line size="80"/></default-field></field>
             <field name="xmlText"><default-field title="Text">
-                <text-area rows="10" cols="80" default-value="&lt;entity-facade-xml&gt;&lt;/entity-facade-xml&gt;"/>
+                <text-area rows="10" cols="80" default-value="&lt;entity-facade-xml locale=&quot;en-US&quot;&gt;&lt;/entity-facade-xml&gt;"/>
             </default-field></field>
             <field name="jsonText"><default-field title="Text">
                 <text-area rows="10" cols="80" default-value=""/>
